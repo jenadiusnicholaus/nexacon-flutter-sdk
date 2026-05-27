@@ -8,3 +8,6 @@ export 'src/calls.dart';
 export 'src/devices.dart';
 export 'src/rooms.dart';
 export 'src/presence.dart';
+export 'src/call_manager.dart';
+export 'src/webrtc.dart';
+export 'src/signaling.dart';
