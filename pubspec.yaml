@@ -1,8 +1,9 @@
 name: nexacon_sdk
-description: Flutter SDK for Nexacon API - Authentication, Messaging, Calls, and IoT Device Management.
+description: A comprehensive Flutter SDK for Nexacon API, providing plug-and-play P2P calling with WebRTC and NX signaling.
 version: 1.0.0
-homepage: https://docs.nexacon.com
+homepage: https://nexacon-flutter-sdk.readthedocs.io/
 repository: https://github.com/nexacon/nexacon-flutter-sdk
+issue_tracker: https://github.com/nexacon/nexacon-flutter-sdk/issues
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

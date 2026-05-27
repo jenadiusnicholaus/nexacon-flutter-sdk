@@ -63,13 +63,11 @@ class WebRTCService {
     _peerConnection = await createPeerConnection(configuration);
 
     _peerConnection!.onIceCandidate = (candidate) {
-      if (candidate != null) {
-        onIceCandidate?.call({
-          'candidate': candidate.candidate,
-          'sdpMid': candidate.sdpMid,
-          'sdpMLineIndex': candidate.sdpMLineIndex,
-        });
-      }
+      onIceCandidate?.call({
+        'candidate': candidate.candidate,
+        'sdpMid': candidate.sdpMid,
+        'sdpMLineIndex': candidate.sdpMLineIndex,
+      });
     };
 
     _peerConnection!.onIceConnectionState = (state) {
