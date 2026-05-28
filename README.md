@@ -141,6 +141,58 @@ messagingManager.presenceStream.listen((presence) {
 messagingManager.dispose();
 ```
 
+### 8. Foldable Device Support
+
+The SDK provides a `FoldStateService` for detecting foldable device state changes on Android.
+
+```dart
+import 'package:nexacon_sdk/nexacon_sdk.dart';
+
+// Create fold state service
+final foldStateService = FoldStateService();
+
+// Listen for fold state changes
+foldStateService.foldStateStream.listen((state) {
+  switch (state) {
+    case FoldState.flat:
+      print('Device is flat');
+      break;
+    case FoldState.folded:
+      print('Device is folded');
+      break;
+    case FoldState.halfOpen:
+      print('Device is half open');
+      break;
+    case FoldState.unknown:
+      print('Fold state unknown');
+      break;
+  }
+});
+
+// Check current state
+if (foldStateService.isFolded) {
+  // Adjust UI for folded state
+}
+
+// Cleanup
+foldStateService.dispose();
+```
+
+**Android Native Implementation**
+
+To enable actual fold detection on Android, you need to implement the native platform code. The SDK provides a reference implementation in `android/src/main/kotlin/com/nexacon/nexacon_sdk/FoldStatePlugin.kt`.
+
+For production use, use Android's DeviceStateManager API:
+
+```kotlin
+val deviceStateManager = context.getSystemService(DeviceStateManager::class.java)
+deviceStateManager.registerCallback(mainExecutor, object : DeviceStateCallback() {
+    override fun onDeviceStateChanged(state: DeviceState) {
+        // Handle fold state changes
+    }
+})
+```
+
 ## Platform Configuration
 
 ### Android
@@ -228,6 +280,7 @@ No additional configuration required. The SDK works out of the box on Windows.
 - **ICE Management**: Automatic ICE candidate buffering and exchange
 - **Call Controls**: Mute, speaker toggle, camera switch
 - **Duration Tracking**: Built-in call duration timer
+- **Foldable Device Support**: Detect fold state changes on Android
 - **Cross-platform**: Works on Android, iOS, Linux, macOS, Web, Windows
 
 ## Call States
@@ -310,6 +363,30 @@ final messagingManager = client.createMessagingManager();
 - `sendMessage({required String to, required String message, String messageType})` - Send message
 - `sendTypingIndicator(String to, {bool isTyping})` - Send typing status
 - `sendReadReceipt(String to, String messageId)` - Send read receipt
+- `dispose()` - Cleanup resources
+
+### FoldStateService
+
+Foldable device state detection service.
+
+```dart
+final foldStateService = FoldStateService();
+```
+
+#### Streams
+
+- `foldStateStream` - Stream of fold state changes
+
+#### Properties
+
+- `currentState` - Current fold state
+- `isFolded` - Whether device is folded
+- `isFlat` - Whether device is flat
+- `isHalfOpen` - Whether device is half open
+
+#### Methods
+
+- `updateFoldState(FoldState state)` - Manually update fold state
 - `dispose()` - Cleanup resources
 
 ## Documentation

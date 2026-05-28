@@ -12,3 +12,4 @@ export 'src/calls/signaling.dart';
 export 'src/devices/devices.dart';
 export 'src/rooms/rooms.dart';
 export 'src/presence/presence.dart';
+export 'src/fold/fold_state.dart';
