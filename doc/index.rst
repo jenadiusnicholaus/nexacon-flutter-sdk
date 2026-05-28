@@ -35,16 +35,22 @@ The Nexacon Flutter SDK enables developers to add P2P calling capabilities to th
 * **WebRTC**: Peer connection management with ICE negotiation
 * **Call Management**: Complete call lifecycle handling
 * **Platform Support**: iOS, Android, Web, and Desktop
+* **Global XMPP Connection**: Shared connection for calls and real-time messaging
+* **Automatic Call Analytics**: Records call events on every call end
 
 Features
 --------
 
 * NX Token Management
 * P2P Audio and Video Calling
-* Automatic Reconnection
+* Real-time Messaging with MessagingManager
+* Automatic Reconnection (ICE restart)
 * ICE Candidate Buffering
 * Call Controls (mute, speaker, camera switch)
 * Duration Tracking
+* Call Statistics (bitrate, packet loss, frame metrics)
+* Quality Settings (resolution, FPS, bitrate)
+* Call History with filtering
 * Cross-platform Support
 
 Services
@@ -53,8 +59,10 @@ Services
 The SDK provides the following services:
 
 * **Messaging**: Send and receive messages, manage contacts
+* **MessagingManager**: Real-time chat via global XMPP connection
 * **Calls**: Initiate and manage 1:1 and group calls
+* **CallManager**: P2P calling with automatic signaling and WebRTC
+* **XmppManager**: Global XMPP connection management
 * **Devices**: Register and manage devices for push notifications
 * **Rooms**: Create and manage group chat rooms
 * **Presence**: Check user online status and last seen
-* **CallManager**: P2P calling with automatic signaling and WebRTC

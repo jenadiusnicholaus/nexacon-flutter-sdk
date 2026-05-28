@@ -33,10 +33,71 @@ Once the client is initialized, all services are available via:
     client.devices     // Register devices for push notifications
     client.rooms       // Create and manage group chat rooms
     client.presence    // Check user online status
+    client.xmppManager // Global XMPP connection (shared by calls & messaging)
 
 ----
 
-3. Next Steps
+3. Real-Time Messaging
+----------------------
+
+For real-time chat, use the global XMPP connection with MessagingManager:
+
+.. code-block:: dart
+
+    // Connect XMPP once (shared by calls and messaging)
+    await client.xmppManager.connect(
+      jid: 'user@example.com',
+      password: 'token',
+      wsUrl: 'wss://your-server.com/ws',
+    );
+
+    // Create messaging manager
+    final messagingManager = client.createMessagingManager();
+
+    // Listen for incoming messages
+    messagingManager.messageStream.listen((message) {
+      print('Received: ${message['message']}');
+    });
+
+    // Send a message
+    messagingManager.sendMessage(
+      to: 'recipient@example.com',
+      message: 'Hello!',
+    );
+
+----
+
+4. Making Calls
+---------------
+
+For peer-to-peer audio/video calls, use CallManager:
+
+.. code-block:: dart
+
+    // Generate NX token
+    final nxResponse = await client.auth.generateXMPPToken(
+      username: '+255788811191',
+    );
+
+    // Create CallManager (uses global XMPP connection)
+    final callManager = await client.createCallManager(
+      nxtoken: nxResponse['token'],
+      nxid: nxResponse['jid'],
+      wsUrl: nxResponse['nxws'],
+      onCallStateChanged: (state) => print('State: $state'),
+      onIncomingCall: (caller) => print('Incoming from: $caller'),
+    );
+
+    // Make a call
+    await callManager.initiateCall(
+      to: '+255788811192',
+      audio: true,
+      video: true,
+    );
+
+----
+
+5. Next Steps
 -------------
 
 Click on a service in the **Services** menu on the left for full documentation, method signatures, parameters, and code examples.

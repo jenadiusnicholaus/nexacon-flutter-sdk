@@ -482,27 +482,214 @@ Record a declined call:
 
 **Usage with CallManager**
 
-Hook into the ``onCallEnded`` and ``onError`` callbacks to record automatically:
+.. note::
+   CallManager automatically records call analytics on every call end. You don't need to manually call ``recordCall`` when using CallManager.
+
+----
+
+getCallHistory
+~~~~~~~~~~~~~
+
+Fetch call history for the current user with optional filters.
+
+**Signature**
 
 .. code-block:: dart
 
-    final callManager = await client.createCallManager(
-      // ...
-      onCallEnded: (reason) async {
-        await client.calls.recordCall(
-          room: currentRoomId,
-          callType: CallType.video,
-          status: CallAnalyticsStatus.ended,
-          durationSeconds: callManager.callDuration?.inSeconds ?? 0,
-          metadata: {'ended_by': reason},
-        );
-      },
-      onError: (error) async {
-        await client.calls.recordCall(
-          room: currentRoomId,
-          callType: CallType.video,
-          status: CallAnalyticsStatus.failed,
-          metadata: {'error': error},
-        );
-      },
+    Future<Map<String, dynamic>> getCallHistory({
+      DateTime? startDate,
+      DateTime? endDate,
+      CallType? callType,
+      CallAnalyticsStatus? status,
+      String? participant,
+      int page = 1,
+      int pageSize = 20,
+    })
+
+**Parameters**
+
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Parameter
+     - Type
+     - Description
+   * - ``startDate``
+     - DateTime?
+     - Filter calls from this date onwards (format: YYYY-MM-DD)
+   * - ``endDate``
+     - DateTime?
+     - Filter calls up to this date (format: YYYY-MM-DD)
+   * - ``callType``
+     - CallType?
+     - Filter by call type (audio, video, p2p, group)
+   * - ``status``
+     - CallAnalyticsStatus?
+     - Filter by call outcome (ended, failed, declined, etc.)
+   * - ``participant``
+     - String?
+     - Filter by participant (NX ID or phone number)
+   * - ``page``
+     - int
+     - Page number (default: 1)
+   * - ``pageSize``
+     - int
+     - Results per page (default: 20)
+
+**Example**
+
+.. code-block:: dart
+
+    // Get all calls (paginated)
+    final history = await client.calls.getCallHistory();
+
+    // Filter by date range
+    final recent = await client.calls.getCallHistory(
+      startDate: DateTime(2026, 5, 1),
+      endDate: DateTime(2026, 5, 27),
     );
+
+    // Filter by call type
+    final videoCalls = await client.calls.getCallHistory(
+      callType: CallType.video,
+    );
+
+    // Filter by status
+    final failedCalls = await client.calls.getCallHistory(
+      status: CallAnalyticsStatus.failed,
+    );
+
+    // Filter by participant
+    final callsWithUser = await client.calls.getCallHistory(
+      participant: 'user123',
+    );
+
+    // Combined filters with pagination
+    final filtered = await client.calls.getCallHistory(
+      callType: CallType.video,
+      status: CallAnalyticsStatus.ended,
+      startDate: DateTime(2026, 5, 20),
+      page: 1,
+      pageSize: 20,
+    );
+
+----
+
+CallManager Advanced Features
+-----------------------------
+
+CallManager provides advanced features for quality control and call statistics.
+
+**Video Quality Settings**
+
+Adjust video resolution and frame rate based on network conditions:
+
+.. code-block:: dart
+
+    // Set low quality for poor network
+    callManager.setVideoQuality(
+      width: 640,
+      height: 480,
+      fps: 15,
+    );
+
+    // Set high quality for good network
+    callManager.setVideoQuality(
+      width: 1920,
+      height: 1080,
+      fps: 30,
+    );
+
+**Bitrate Control**
+
+Limit audio and video bandwidth:
+
+.. code-block:: dart
+
+    // Set audio bitrate (kbps)
+    callManager.setAudioBitrate(64);  // 64 kbps
+
+    // Set video bitrate (kbps)
+    callManager.setVideoBitrate(1000);  // 1000 kbps
+
+**Call Statistics**
+
+Monitor real-time call quality metrics:
+
+.. code-block:: dart
+
+    // Start collecting statistics (every 2 seconds)
+    callManager.startCallStatsCollection();
+
+    // Listen to statistics stream
+    callManager.callStatsStream?.listen((stats) {
+      print('Video bitrate: ${stats['video']['bitrate']} bps');
+      print('Packets lost: ${stats['video']['packetsLost']}');
+      print('Frame size: ${stats['video']['frameWidth']}x${stats['video']['frameHeight']}');
+    });
+
+    // Get latest stats snapshot
+    final latest = callManager.latestCallStats;
+
+**Statistics Data Structure**
+
+The stats stream provides the following data:
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Field
+     - Description
+   * - ``video.bitrate``
+     - Current video bitrate in bps
+   * - ``video.packetsReceived``
+     - Total video packets received
+   * - ``video.packetsLost``
+     - Total video packets lost
+   * - ``video.bytesReceived``
+     - Total video bytes received
+   * - ``video.framesReceived``
+     - Total video frames received
+   * - ``video.frameWidth``
+     - Current video frame width
+   * - ``video.frameHeight``
+     - Current video frame height
+   * - ``audio.bitrate``
+     - Current audio bitrate in bps
+   * - ``audio.packetsReceived``
+     - Total audio packets received
+   * - ``audio.packetsLost``
+     - Total audio packets lost
+   * - ``audio.bytesReceived``
+     - Total audio bytes received
+   * - ``videoOut.packetsSent``
+     - Total video packets sent
+   * - ``videoOut.bytesSent``
+     - Total video bytes sent
+   * - ``audioOut.packetsSent``
+     - Total audio packets sent
+   * - ``audioOut.bytesSent``
+     - Total audio bytes sent
+
+**Quality Presets**
+
+Recommended quality settings for different network conditions:
+
+.. list-table::
+   :widths: 20 40 40
+   :header-rows: 1
+
+   * - Network
+     - Resolution
+     - Bitrate
+   * - Poor (3G)
+     - 640x480 @ 15fps
+     - 500 kbps video, 32 kbps audio
+   * - Medium (4G/WiFi)
+     - 1280x720 @ 30fps (default)
+     - 1000 kbps video, 64 kbps audio
+   * - Good (5G/Fiber)
+     - 1920x1080 @ 30fps
+     - 2000 kbps video, 128 kbps audio

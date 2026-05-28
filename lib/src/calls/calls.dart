@@ -148,31 +148,37 @@ class Calls {
   }
 
   /// Get call history for the current user
-  /// Supports filtering by date range, call type, and status
+  /// Supports filtering by date range, call type, status, and participant
   Future<Map<String, dynamic>> getCallHistory({
     DateTime? startDate,
     DateTime? endDate,
     CallType? callType,
     CallAnalyticsStatus? status,
-    int limit = 50,
-    int offset = 0,
+    String? participant,
+    int page = 1,
+    int pageSize = 20,
   }) async {
     final params = <String, dynamic>{
-      'limit': limit,
-      'offset': offset,
+      'page': page,
+      'page_size': pageSize,
     };
 
     if (startDate != null) {
-      params['start_date'] = startDate.toIso8601String();
+      params['start_date'] =
+          '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}';
     }
     if (endDate != null) {
-      params['end_date'] = endDate.toIso8601String();
+      params['end_date'] =
+          '${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}';
     }
     if (callType != null) {
       params['call_type'] = callType.name;
     }
     if (status != null) {
       params['status'] = status.name;
+    }
+    if (participant != null && participant.isNotEmpty) {
+      params['participant'] = participant;
     }
 
     return _client.request('GET', '/nx/call-history/', params: params);
