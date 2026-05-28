@@ -41,7 +41,12 @@ Features
 Getting Help
 ------------
 
-* `Documentation <api.html>`_
+* `API Reference <api.html>`_
+* `Messaging Service <messaging.html>`_
+* `Calls Service <calls.html>`_
+* `Devices Service <devices.html>`_
+* `Rooms Service <rooms.html>`_
+* `Presence Service <presence.html>`_
 * `Installation Guide <installation.html>`_
 * `Quick Start <quickstart.html>`_
 * `Platform Configuration <platform-config.html>`_
