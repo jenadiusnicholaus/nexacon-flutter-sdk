@@ -2,10 +2,19 @@ import 'client.dart';
 import 'exceptions.dart';
 
 /// Call types enum
-enum CallType { audio, video, p2p }
+enum CallType { audio, video, p2p, group }
 
 /// Call analytics status enum
-enum CallAnalyticsStatus { ended, failed, declined, missed }
+enum CallAnalyticsStatus {
+  initiated,
+  calling,
+  answered,
+  declined,
+  cancelled,
+  missed,
+  ended,
+  failed,
+}
 
 /// Calls Service
 class Calls {

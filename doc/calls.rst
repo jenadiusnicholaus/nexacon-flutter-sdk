@@ -134,6 +134,8 @@ Call Types
      - Audio and video call
    * - ``CallType.p2p``
      - Peer-to-peer WebRTC call (direct, low latency)
+   * - ``CallType.group``
+     - Group call with multiple participants
 
 ----
 
@@ -420,19 +422,27 @@ Record a call event for analytics. Call this after every call ends, fails, is de
 **Analytics Status Values**
 
 .. list-table::
-   :widths: 20 80
+   :widths: 25 75
    :header-rows: 1
 
    * - Status
      - Description
+   * - ``CallAnalyticsStatus.initiated``
+     - Call was initiated by the caller
+   * - ``CallAnalyticsStatus.calling``
+     - Ringing, waiting for recipient to answer
+   * - ``CallAnalyticsStatus.answered``
+     - Recipient answered the call
+   * - ``CallAnalyticsStatus.declined``
+     - Recipient declined the call
+   * - ``CallAnalyticsStatus.cancelled``
+     - Caller cancelled before answer
+   * - ``CallAnalyticsStatus.missed``
+     - Recipient did not answer
    * - ``CallAnalyticsStatus.ended``
      - Call completed successfully
    * - ``CallAnalyticsStatus.failed``
      - Call failed (e.g. ICE connection error)
-   * - ``CallAnalyticsStatus.declined``
-     - Recipient declined the call
-   * - ``CallAnalyticsStatus.missed``
-     - Recipient did not answer
 
 **Examples**
 
