@@ -17,6 +17,18 @@ class WebRTCService {
   bool get isMuted => _isMuted;
   bool get isSpeakerOn => _isSpeakerOn;
 
+  // Quality settings
+  int _videoWidth = 1280;
+  int _videoHeight = 720;
+  int _videoFps = 30;
+  int _audioBitrate = 64; // kbps
+  int _videoBitrate = 1000; // kbps
+
+  // Call statistics
+  final _statsController = StreamController<Map<String, dynamic>>.broadcast();
+  Timer? _statsTimer;
+  Map<String, dynamic> _lastStats = {};
+
   // Call duration
   DateTime? _callStartTime;
   Timer? _durationTimer;
@@ -35,6 +47,9 @@ class WebRTCService {
   final Function(MediaStream)? onRemoteStream;
   final Function(Map<String, dynamic>)? onIceCandidate;
   final Function(String)? onCallEnded;
+
+  /// Stream of call statistics (bitrate, packet loss, etc.)
+  Stream<Map<String, dynamic>> get statsStream => _statsController.stream;
 
   WebRTCService({
     this.onLocalStream,
@@ -59,6 +74,15 @@ class WebRTCService {
       'iceServers': merged,
       'sdpSemantics': 'unified-plan',
     };
+
+    // Add bitrate constraints
+    if (_videoBitrate > 0) {
+      configuration['video'] = {
+        'mandatory': {
+          'maxBitrate': _videoBitrate * 1000,
+        },
+      };
+    }
 
     _peerConnection = await createPeerConnection(configuration);
 
@@ -101,12 +125,17 @@ class WebRTCService {
     bool video = true,
   }) async {
     final constraints = {
-      'audio': audio,
+      'audio': audio
+          ? {
+              'bitrate': _audioBitrate * 1000,
+            }
+          : false,
       'video': video
           ? {
               'facingMode': 'user',
-              'width': {'ideal': 1280},
-              'height': {'ideal': 720},
+              'width': {'ideal': _videoWidth},
+              'height': {'ideal': _videoHeight},
+              'frameRate': {'ideal': _videoFps},
             }
           : false,
     };
@@ -242,6 +271,7 @@ class WebRTCService {
   /// End call and cleanup
   Future<void> endCall() async {
     _stopDurationTimer();
+    _stopStatsTimer();
 
     if (_localStream != null) {
       _localStream!.getTracks().forEach((track) => track.stop());
@@ -260,6 +290,7 @@ class WebRTCService {
     _iceRestartAttempted = false;
     _isMuted = false;
     _isSpeakerOn = false;
+    _lastStats.clear();
   }
 
   /// Start duration timer
@@ -318,4 +349,116 @@ class WebRTCService {
 
   /// Check if call is active
   bool get isCallActive => _peerConnection != null;
+
+  /// Set video quality
+  void setVideoQuality({
+    int width = 1280,
+    int height = 720,
+    int fps = 30,
+  }) {
+    _videoWidth = width;
+    _videoHeight = height;
+    _videoFps = fps;
+  }
+
+  /// Set audio bitrate (kbps)
+  void setAudioBitrate(int kbps) {
+    _audioBitrate = kbps;
+  }
+
+  /// Set video bitrate (kbps)
+  void setVideoBitrate(int kbps) {
+    _videoBitrate = kbps;
+  }
+
+  /// Start collecting call statistics
+  void startStatsCollection({Duration interval = const Duration(seconds: 2)}) {
+    _stopStatsTimer();
+    _statsTimer = Timer.periodic(interval, (_) => _collectStats());
+  }
+
+  /// Stop collecting call statistics
+  void _stopStatsTimer() {
+    _statsTimer?.cancel();
+    _statsTimer = null;
+  }
+
+  /// Collect WebRTC statistics
+  Future<void> _collectStats() async {
+    if (_peerConnection == null) return;
+
+    try {
+      final stats = await _peerConnection!.getStats();
+      final statsMap = <String, dynamic>{};
+
+      for (final report in stats) {
+        if (report.type == 'inbound-rtp' &&
+            report.values['mediaType'] == 'video') {
+          statsMap['video'] = {
+            'packetsReceived': report.values['packetsReceived'],
+            'packetsLost': report.values['packetsLost'],
+            'bytesReceived': report.values['bytesReceived'],
+            'framesReceived': report.values['framesReceived'],
+            'frameWidth': report.values['frameWidth'],
+            'frameHeight': report.values['frameHeight'],
+          };
+        } else if (report.type == 'inbound-rtp' &&
+            report.values['mediaType'] == 'audio') {
+          statsMap['audio'] = {
+            'packetsReceived': report.values['packetsReceived'],
+            'packetsLost': report.values['packetsLost'],
+            'bytesReceived': report.values['bytesReceived'],
+          };
+        } else if (report.type == 'outbound-rtp' &&
+            report.values['mediaType'] == 'video') {
+          statsMap['videoOut'] = {
+            'packetsSent': report.values['packetsSent'],
+            'bytesSent': report.values['bytesSent'],
+          };
+        } else if (report.type == 'outbound-rtp' &&
+            report.values['mediaType'] == 'audio') {
+          statsMap['audioOut'] = {
+            'packetsSent': report.values['packetsSent'],
+            'bytesSent': report.values['bytesSent'],
+          };
+        }
+      }
+
+      // Calculate bitrates
+      if (_lastStats.isNotEmpty) {
+        final now = DateTime.now();
+        final lastTime = _lastStats['timestamp'] as DateTime?;
+        if (lastTime != null) {
+          final elapsed = now.difference(lastTime).inMilliseconds / 1000;
+          if (elapsed > 0) {
+            if (statsMap['video'] != null && _lastStats['video'] != null) {
+              final bytesDiff = (statsMap['video']['bytesReceived'] as int) -
+                  (_lastStats['video']['bytesReceived'] as int);
+              statsMap['video']['bitrate'] = (bytesDiff * 8 / elapsed).round();
+            }
+            if (statsMap['audio'] != null && _lastStats['audio'] != null) {
+              final bytesDiff = (statsMap['audio']['bytesReceived'] as int) -
+                  (_lastStats['audio']['bytesReceived'] as int);
+              statsMap['audio']['bitrate'] = (bytesDiff * 8 / elapsed).round();
+            }
+          }
+        }
+      }
+
+      statsMap['timestamp'] = DateTime.now();
+      _lastStats = statsMap;
+      _statsController.add(statsMap);
+    } catch (e) {
+      print('Error collecting stats: $e');
+    }
+  }
+
+  /// Get latest statistics snapshot
+  Map<String, dynamic> get latestStats => Map.from(_lastStats);
+
+  /// Cleanup
+  void dispose() {
+    _stopStatsTimer();
+    _statsController.close();
+  }
 }

@@ -135,6 +135,34 @@ class CallManager {
   /// Get current call duration
   Duration get callDuration => _webrtcService?.callDuration ?? Duration.zero;
 
+  /// Get call statistics stream
+  Stream<Map<String, dynamic>>? get callStatsStream =>
+      _webrtcService?.statsStream;
+
+  /// Get latest call statistics snapshot
+  Map<String, dynamic> get latestCallStats => _webrtcService?.latestStats ?? {};
+
+  /// Set video quality
+  void setVideoQuality({int width = 1280, int height = 720, int fps = 30}) {
+    _webrtcService?.setVideoQuality(width: width, height: height, fps: fps);
+  }
+
+  /// Set audio bitrate (kbps)
+  void setAudioBitrate(int kbps) {
+    _webrtcService?.setAudioBitrate(kbps);
+  }
+
+  /// Set video bitrate (kbps)
+  void setVideoBitrate(int kbps) {
+    _webrtcService?.setVideoBitrate(kbps);
+  }
+
+  /// Start collecting call statistics
+  void startCallStatsCollection(
+      {Duration interval = const Duration(seconds: 2)}) {
+    _webrtcService?.startStatsCollection(interval: interval);
+  }
+
   /// Initiate an outgoing P2P call
   Future<void> initiateCall({
     required String to,

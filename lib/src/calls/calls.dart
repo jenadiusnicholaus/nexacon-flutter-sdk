@@ -146,4 +146,35 @@ class Calls {
       'metadata': metadata ?? {},
     });
   }
+
+  /// Get call history for the current user
+  /// Supports filtering by date range, call type, and status
+  Future<Map<String, dynamic>> getCallHistory({
+    DateTime? startDate,
+    DateTime? endDate,
+    CallType? callType,
+    CallAnalyticsStatus? status,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final params = <String, dynamic>{
+      'limit': limit,
+      'offset': offset,
+    };
+
+    if (startDate != null) {
+      params['start_date'] = startDate.toIso8601String();
+    }
+    if (endDate != null) {
+      params['end_date'] = endDate.toIso8601String();
+    }
+    if (callType != null) {
+      params['call_type'] = callType.name;
+    }
+    if (status != null) {
+      params['status'] = status.name;
+    }
+
+    return _client.request('GET', '/nx/call-history/', params: params);
+  }
 }
