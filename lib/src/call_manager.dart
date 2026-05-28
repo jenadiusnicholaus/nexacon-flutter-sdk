@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'client.dart';
 import 'webrtc.dart';
 import 'signaling.dart';
@@ -35,6 +36,8 @@ class CallManager {
   final Function(String)? onIncomingCall;
   final Function(String)? onCallEnded;
   final Function(String)? onError;
+  final Function(MediaStream)? onLocalStream;
+  final Function(MediaStream)? onRemoteStream;
 
   CallManager(
     this._client, {
@@ -42,6 +45,8 @@ class CallManager {
     this.onIncomingCall,
     this.onCallEnded,
     this.onError,
+    this.onLocalStream,
+    this.onRemoteStream,
   });
 
   /// Initialize the call manager with NX credentials
@@ -94,12 +99,8 @@ class CallManager {
 
     // Initialize WebRTC service
     _webrtcService = WebRTCService(
-      onLocalStream: (stream) {
-        // Local stream ready - can be used for UI
-      },
-      onRemoteStream: (stream) {
-        // Remote stream ready - can be used for UI
-      },
+      onLocalStream: onLocalStream,
+      onRemoteStream: onRemoteStream,
       onIceCandidate: (candidate) {
         // Send ICE candidate via signaling
         if (_currentRoomId != null) {
@@ -133,6 +134,9 @@ class CallManager {
   /// Get WebRTC service instance (for UI integration)
   WebRTCService? get webrtcService => _webrtcService;
 
+  /// Get current call duration
+  Duration get callDuration => _webrtcService?.callDuration ?? Duration.zero;
+
   /// Initiate an outgoing P2P call
   Future<void> initiateCall({
     required String to,
@@ -146,7 +150,6 @@ class CallManager {
     try {
       _setCallState(CallState.calling);
 
-      // Generate room ID
       _currentRoomId = 'call_${DateTime.now().millisecondsSinceEpoch}';
 
       // Initiate call via API (sends FCM + XMPP)
@@ -168,12 +171,48 @@ class CallManager {
         ),
       );
 
-      // Wait for call response (timeout after 60 seconds)
+      // Wait for callee to accept (timeout 60s)
       await _waitForCallResponse();
+
+      // Callee accepted — now set up WebRTC and send offer
+      await _setupWebRTCAndCreateOffer(audio: audio, video: video);
     } catch (e) {
       _setCallState(CallState.idle);
       onError?.call('Failed to initiate call: $e');
       rethrow;
+    }
+  }
+
+  /// Set up WebRTC peer connection and create offer (caller side)
+  Future<void> _setupWebRTCAndCreateOffer({
+    bool audio = true,
+    bool video = true,
+  }) async {
+    try {
+      final credentials = await _client.calls.getWebRTCCredentials();
+      final iceServers = (credentials['ice_servers'] as List<dynamic>?) ?? [];
+      iceServers.add({'urls': 'stun:stun.l.google.com:19302'});
+
+      await _webrtcService?.initializePeerConnection(
+        iceServers.cast<Map<String, dynamic>>(),
+      );
+
+      await _webrtcService?.getUserMedia(audio: audio, video: video);
+      await _webrtcService?.addLocalStream();
+
+      final offer = await _webrtcService?.createOffer();
+      if (offer != null) {
+        _signalingService?.sendMessage(
+          _signalingService!.createWebRTCOffer(
+            roomId: _currentRoomId!,
+            sdp: offer.sdp ?? '',
+            sdpType: offer.type ?? 'offer',
+          ),
+        );
+      }
+    } catch (e) {
+      _endCall('Failed to setup WebRTC: $e');
+      onError?.call('Failed to setup WebRTC: $e');
     }
   }
 
@@ -208,7 +247,7 @@ class CallManager {
     }
 
     try {
-      // Send call response
+      // Notify caller we accepted
       _signalingService?.sendMessage(
         _signalingService!.createCallResponse(
           roomId: _currentRoomId!,
@@ -218,23 +257,19 @@ class CallManager {
 
       _setCallState(CallState.calling);
 
-      // Get WebRTC credentials
+      // Set up WebRTC as callee — offer will arrive via _handleWebRTCOffer
       final credentials = await _client.calls.getWebRTCCredentials();
-      final iceServers = credentials['ice_servers'] as List<dynamic>;
-
-      // Add Google STUN as fallback
+      final iceServers = (credentials['ice_servers'] as List<dynamic>?) ?? [];
       iceServers.add({'urls': 'stun:stun.l.google.com:19302'});
 
-      // Initialize WebRTC
       await _webrtcService?.initializePeerConnection(
         iceServers.cast<Map<String, dynamic>>(),
       );
 
-      // Get user media
       await _webrtcService?.getUserMedia(audio: audio, video: video);
       await _webrtcService?.addLocalStream();
 
-      // Wait for offer from caller
+      // Answer is created in _handleWebRTCOffer when offer arrives
     } catch (e) {
       _endCall('Failed to accept call: $e');
       onError?.call('Failed to accept call: $e');
@@ -316,55 +351,17 @@ class CallManager {
     }
   }
 
-  /// Handle call response
-  Future<void> _handleCallResponse(SignalingMessage message) async {
-    // If we're waiting for a response, complete the completer
+  /// Handle call response — just completes the waiting completer
+  void _handleCallResponse(SignalingMessage message) {
     if (_callResponseCompleter != null &&
         !_callResponseCompleter!.isCompleted) {
       if (message.data['accepted'] != true) {
         _callResponseCompleter!.completeError('Call rejected');
-        return;
+      } else {
+        _callResponseCompleter!.complete();
       }
-      _callResponseCompleter!.complete();
-      return;
-    }
-
-    if (message.data['accepted'] != true) {
+    } else if (message.data['accepted'] != true) {
       _endCall('Call rejected');
-      return;
-    }
-
-    try {
-      // Get WebRTC credentials
-      final credentials = await _client.calls.getWebRTCCredentials();
-      final iceServers = credentials['ice_servers'] as List<dynamic>;
-
-      // Add Google STUN as fallback
-      iceServers.add({'urls': 'stun:stun.l.google.com:19302'});
-
-      // Initialize WebRTC
-      await _webrtcService?.initializePeerConnection(
-        iceServers.cast<Map<String, dynamic>>(),
-      );
-
-      // Get user media
-      await _webrtcService?.getUserMedia(audio: true, video: true);
-      await _webrtcService?.addLocalStream();
-
-      // Create and send offer
-      final offer = await _webrtcService?.createOffer();
-      if (offer != null) {
-        _signalingService?.sendMessage(
-          _signalingService!.createWebRTCOffer(
-            roomId: _currentRoomId!,
-            sdp: offer.sdp ?? '',
-            sdpType: offer.type ?? 'offer',
-          ),
-        );
-      }
-    } catch (e) {
-      _endCall('Failed to setup WebRTC: $e');
-      onError?.call('Failed to setup WebRTC: $e');
     }
   }
 

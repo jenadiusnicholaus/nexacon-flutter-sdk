@@ -147,6 +147,8 @@ class NexaconClient {
     Function(String)? onIncomingCall,
     Function(String)? onCallEnded,
     Function(String)? onError,
+    Function(dynamic)? onLocalStream,
+    Function(dynamic)? onRemoteStream,
   }) async {
     final callManager = CallManager(
       this,
@@ -154,6 +156,8 @@ class NexaconClient {
       onIncomingCall: onIncomingCall,
       onCallEnded: onCallEnded,
       onError: onError,
+      onLocalStream: onLocalStream,
+      onRemoteStream: onRemoteStream,
     );
 
     // Auto-initialize XMPP if credentials provided
