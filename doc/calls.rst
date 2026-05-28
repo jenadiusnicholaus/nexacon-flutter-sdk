@@ -1,28 +1,42 @@
 Calls Service
 =============
 
-The Calls service provides functionality for initiating and managing calls through the Nexacon API.
+The ``Calls`` service handles all call operations — 1:1 audio/video calls, group calls, and peer-to-peer WebRTC calls.
 
 .. code-block:: dart
 
+    // Access via client
     final calls = client.calls;
 
+----
+
 Call Types
-~~~~~~~~~~
+----------
 
-The service supports the following call types:
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
-* ``audio`` - Audio-only calls
-* ``video`` - Video calls
-* ``p2p`` - Peer-to-peer WebRTC calls
+   * - Type
+     - Description
+   * - ``CallType.audio``
+     - Audio-only call
+   * - ``CallType.video``
+     - Audio and video call
+   * - ``CallType.p2p``
+     - Peer-to-peer WebRTC call (direct, low latency)
+
+----
 
 Methods
-~~~~~~~
+-------
 
 initiateCall
-^^^^^^^^^^^^
+~~~~~~~~~~~~
 
-Initiate a 1:1 call.
+Start a 1:1 call with a single user.
+
+**Signature**
 
 .. code-block:: dart
 
@@ -32,22 +46,42 @@ Initiate a 1:1 call.
       String? room,
     })
 
-Parameters
-^^^^^^^^^^
+**Parameters**
 
-* **to** (String): Recipient's phone number or identifier
-* **callType** (CallType): Type of call (audio, video, p2p)
-* **room** (String?): Optional room identifier
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
 
-Returns
-^^^^^^^
+   * - Parameter
+     - Type
+     - Description
+   * - ``to``
+     - String
+     - Recipient's phone number or NX identifier
+   * - ``callType``
+     - CallType
+     - Type of call: ``audio``, ``video`` (default), or ``p2p``
+   * - ``room``
+     - String?
+     - Optional custom room identifier
 
-``Future<Map<String, dynamic>>``: Response from the server
+**Example**
+
+.. code-block:: dart
+
+    await client.calls.initiateCall(
+      to: '+255788811192',
+      callType: CallType.video,
+    );
+
+----
 
 initiateGroupCall
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
-Initiate a group call with multiple participants.
+Start a call with multiple participants.
+
+**Signature**
 
 .. code-block:: dart
 
@@ -57,22 +91,114 @@ Initiate a group call with multiple participants.
       String? room,
     })
 
-Parameters
-^^^^^^^^^^
+**Parameters**
 
-* **participants** (List<String>): List of participant identifiers
-* **callType** (CallType): Type of call (audio, video, p2p)
-* **room** (String?): Optional room identifier
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
 
-Returns
-^^^^^^^
+   * - Parameter
+     - Type
+     - Description
+   * - ``participants``
+     - List<String>
+     - List of recipient phone numbers or NX identifiers
+   * - ``callType``
+     - CallType
+     - Type of call: ``audio``, ``video`` (default), or ``p2p``
+   * - ``room``
+     - String?
+     - Optional custom room identifier
 
-``Future<Map<String, dynamic>>``: Response from the server
+**Example**
+
+.. code-block:: dart
+
+    await client.calls.initiateGroupCall(
+      participants: ['+255788811192', '+255788811193'],
+      callType: CallType.audio,
+    );
+
+----
+
+initiateP2PCall
+~~~~~~~~~~~~~~~
+
+Start a direct peer-to-peer WebRTC call. This sends both an FCM push notification and an NX signaling message to the recipient.
+
+**Signature**
+
+.. code-block:: dart
+
+    Future<Map<String, dynamic>> initiateP2PCall({
+      required String to,
+      String? room,
+    })
+
+**Parameters**
+
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Parameter
+     - Type
+     - Description
+   * - ``to``
+     - String
+     - Recipient's phone number or NX identifier
+   * - ``room``
+     - String?
+     - Optional custom room identifier
+
+**Example**
+
+.. code-block:: dart
+
+    await client.calls.initiateP2PCall(
+      to: '+255788811192',
+    );
+
+----
+
+declineCall
+~~~~~~~~~~~
+
+Decline an incoming call.
+
+**Signature**
+
+.. code-block:: dart
+
+    Future<Map<String, dynamic>> declineCall(String room)
+
+**Parameters**
+
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Parameter
+     - Type
+     - Description
+   * - ``room``
+     - String
+     - The room identifier of the incoming call
+
+**Example**
+
+.. code-block:: dart
+
+    await client.calls.declineCall(roomId);
+
+----
 
 getCallUrl
-^^^^^^^^^^
+~~~~~~~~~~
 
-Get a pre-signed call URL for mobile apps.
+Generate a pre-signed call URL for use in mobile apps or web clients.
+
+**Signature**
 
 .. code-block:: dart
 
@@ -82,70 +208,58 @@ Get a pre-signed call URL for mobile apps.
       String? room,
     })
 
-Parameters
-^^^^^^^^^^
+**Parameters**
 
-* **to** (String): Recipient's phone number or identifier
-* **callType** (CallType): Type of call (audio, video, p2p)
-* **room** (String?): Optional room identifier
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
 
-Returns
-^^^^^^^
+   * - Parameter
+     - Type
+     - Description
+   * - ``to``
+     - String
+     - Recipient's phone number or NX identifier
+   * - ``callType``
+     - CallType
+     - Type of call: ``audio``, ``video`` (default), or ``p2p``
+   * - ``room``
+     - String?
+     - Optional custom room identifier
 
-``Future<String>``: Pre-signed call URL
-
-declineCall
-^^^^^^^^^^
-
-Decline an incoming call.
+**Example**
 
 .. code-block:: dart
 
-    Future<Map<String, dynamic>> declineCall(String room)
+    final url = await client.calls.getCallUrl(
+      to: '+255788811192',
+      callType: CallType.video,
+    );
+    // Open url in browser or deep link
 
-Parameters
-^^^^^^^^^^
-
-* **room** (String): Room identifier for the call
-
-Returns
-^^^^^^^
-
-``Future<Map<String, dynamic>>``: Response from the server
+----
 
 getWebRTCCredentials
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
-Get TURN/STUN credentials for WebRTC P2P calls. Credentials are time-limited (24h TTL). Fetch fresh credentials before each call.
+Fetch TURN/STUN server credentials required for WebRTC P2P calls.
+
+.. note::
+   Credentials have a **24-hour TTL**. Always fetch fresh credentials immediately before starting a call.
+
+**Signature**
 
 .. code-block:: dart
 
     Future<Map<String, dynamic>> getWebRTCCredentials()
 
-Returns
-^^^^^^^
+**Returns**
 
-``Future<Map<String, dynamic>>``: TURN/STUN credentials
+A map containing ``iceServers``, ``username``, and ``password`` for use with the WebRTC peer connection.
 
-initiateP2PCall
-^^^^^^^^^^^^^^
-
-Initiate a P2P WebRTC call (sends FCM push + XMPP notification).
+**Example**
 
 .. code-block:: dart
 
-    Future<Map<String, dynamic>> initiateP2PCall({
-      required String to,
-      String? room,
-    })
-
-Parameters
-^^^^^^^^^^
-
-* **to** (String): Recipient's phone number or identifier
-* **room** (String?): Optional room identifier
-
-Returns
-^^^^^^^
-
-``Future<Map<String, dynamic>>``: Response from the server
+    final credentials = await client.calls.getWebRTCCredentials();
+    final iceServers = credentials['iceServers'];
