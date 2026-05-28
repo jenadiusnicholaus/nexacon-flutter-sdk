@@ -62,6 +62,5 @@ Quick Examples
 Next Steps
 ----------
 
-* Learn about `Platform Configuration <platform-config.html>`_
 * Explore individual `Services <#available-services>`_ for detailed documentation
 * Check the `API Reference <api.html>`_ for complete API documentation
