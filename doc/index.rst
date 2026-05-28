@@ -11,6 +11,11 @@ Welcome to the official documentation for the Nexacon Flutter SDK. This SDK prov
    quickstart
    platform-config
    api
+   messaging
+   calls
+   devices
+   rooms
+   presence
 
 Overview
 --------
