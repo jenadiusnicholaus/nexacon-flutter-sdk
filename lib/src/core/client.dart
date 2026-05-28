@@ -28,7 +28,7 @@ class NexaconClient {
   late final Devices devices;
   late final Rooms rooms;
   late final Presence presence;
-  late final XmppManager _xmppManager;
+  late final XmppManager _nxManager;
 
   NexaconClient({
     required this.apiKey,
@@ -37,7 +37,7 @@ class NexaconClient {
     this.timeout = const Duration(seconds: 30),
   }) {
     _httpClient = http.Client();
-    _xmppManager = XmppManager();
+    _nxManager = XmppManager();
     auth = Auth(this);
     messaging = Messaging(this);
     calls = Calls(this);
@@ -138,7 +138,7 @@ class NexaconClient {
 
   void close() {
     _httpClient.close();
-    _xmppManager.dispose();
+    _nxManager.dispose();
   }
 
   /// Create a CallManager instance for P2P calling
@@ -157,7 +157,7 @@ class NexaconClient {
   }) async {
     final callManager = CallManager(
       this,
-      _xmppManager,
+      _nxManager,
       onCallStateChanged: onCallStateChanged,
       onIncomingCall: onIncomingCall,
       onCallEnded: onCallEnded,
@@ -185,6 +185,6 @@ class NexaconClient {
   /// Create a MessagingManager for real-time chat
   /// Connection must be established first
   MessagingManager createMessagingManager() {
-    return MessagingManager(_xmppManager);
+    return MessagingManager(_nxManager);
   }
 }

@@ -59,10 +59,9 @@ Services
 The SDK provides the following services:
 
 * **Messaging**: Send and receive messages, manage contacts
-* **MessagingManager**: Real-time chat via global XMPP connection
+* **MessagingManager**: Real-time chat via global connection
 * **Calls**: Initiate and manage 1:1 and group calls
 * **CallManager**: P2P calling with automatic signaling and WebRTC
-* **XmppManager**: Global XMPP connection management
 * **Devices**: Register and manage devices for push notifications
 * **Rooms**: Create and manage group chat rooms
 * **Presence**: Check user online status and last seen

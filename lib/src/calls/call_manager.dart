@@ -19,7 +19,7 @@ enum CallState {
 /// Call Manager - Orchestrates full P2P call flow
 class CallManager {
   final NexaconClient _client;
-  final XmppManager _xmppManager;
+  final XmppManager _nxManager;
   WebRTCService? _webrtcService;
   SignalingService? _signalingService;
 
@@ -42,7 +42,7 @@ class CallManager {
 
   CallManager(
     this._client,
-    this._xmppManager, {
+    this._nxManager, {
     this.onCallStateChanged,
     this.onIncomingCall,
     this.onCallEnded,
@@ -63,7 +63,7 @@ class CallManager {
     _myName = name ?? nxid.split('@')[0];
 
     // Connect via global XMPP manager
-    final connected = await _xmppManager.connect(
+    final connected = await _nxManager.connect(
       jid: nxid,
       password: nxtoken,
       wsUrl: wsUrl,
@@ -75,7 +75,7 @@ class CallManager {
     }
 
     // Listen for signaling messages from global XMPP
-    _xmppManager.signalingStream.listen((data) {
+    _nxManager.signalingStream.listen((data) {
       try {
         final signalingMessage = SignalingMessage.fromJson(data);
         _handleSignalingMessage(signalingMessage);
@@ -90,7 +90,7 @@ class CallManager {
       onSendMessage: (message) {
         // Send via global XMPP to peer
         if (_peerJid != null) {
-          _xmppManager.sendMessage(_peerJid!, message);
+          _nxManager.sendMessage(_peerJid!, message);
         }
       },
     );

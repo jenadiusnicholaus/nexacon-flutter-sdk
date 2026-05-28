@@ -5,7 +5,7 @@ import '../core/xmpp_manager.dart';
 /// Real-time messaging manager
 /// Uses global connection for instant messaging
 class MessagingManager {
-  final XmppManager _xmppManager;
+  final XmppManager _nxManager;
 
   // Stream for incoming chat messages
   final _messageController = StreamController<Map<String, dynamic>>.broadcast();
@@ -42,9 +42,9 @@ class MessagingManager {
   /// Stream of presence changes (online/offline)
   Stream<Map<String, dynamic>> get presenceStream => _presenceController.stream;
 
-  MessagingManager(this._xmppManager) {
+  MessagingManager(this._nxManager) {
     // Subscribe to XMPP message stream and route by type
-    _xmppManager.messageStream.listen((data) {
+    _nxManager.messageStream.listen((data) {
       final type = data['type'] as String?;
       if (type == 'typing') {
         _typingController.add(data);
@@ -57,7 +57,7 @@ class MessagingManager {
     });
 
     // Subscribe to presence stream
-    _xmppManager.presenceStream.listen((data) {
+    _nxManager.presenceStream.listen((data) {
       final type = data['type'] as String?;
       if (type == 'composing' || type == 'paused' || type == 'active') {
         // Typing indicators via presence (XEP-0085)
@@ -73,7 +73,7 @@ class MessagingManager {
     });
 
     // Subscribe to delivery receipt stream
-    _xmppManager.deliveryReceiptStream.listen((data) {
+    _nxManager.deliveryReceiptStream.listen((data) {
       _deliveryReceiptController.add(data);
     });
   }
@@ -89,7 +89,7 @@ class MessagingManager {
       'message': message,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     });
-    _xmppManager.sendMessage(to, payload);
+    _nxManager.sendMessage(to, payload);
   }
 
   /// Send a typing indicator
@@ -99,7 +99,7 @@ class MessagingManager {
       'is_typing': isTyping,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     });
-    _xmppManager.sendMessage(to, payload);
+    _nxManager.sendMessage(to, payload);
   }
 
   /// Send a read receipt
@@ -109,7 +109,7 @@ class MessagingManager {
       'message_id': messageId,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     });
-    _xmppManager.sendMessage(to, payload);
+    _nxManager.sendMessage(to, payload);
   }
 
   /// Cleanup

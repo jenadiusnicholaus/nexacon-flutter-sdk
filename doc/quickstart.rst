@@ -33,23 +33,15 @@ Once the client is initialized, all services are available via:
     client.devices     // Register devices for push notifications
     client.rooms       // Create and manage group chat rooms
     client.presence    // Check user online status
-    client.xmppManager // Global XMPP connection (shared by calls & messaging)
 
 ----
 
 3. Real-Time Messaging
 ----------------------
 
-For real-time chat, use the global XMPP connection with MessagingManager:
+For real-time chat, use MessagingManager:
 
 .. code-block:: dart
-
-    // Connect XMPP once (shared by calls and messaging)
-    await client.xmppManager.connect(
-      jid: 'user@example.com',
-      password: 'token',
-      wsUrl: 'wss://your-server.com/ws',
-    );
 
     // Create messaging manager
     final messagingManager = client.createMessagingManager();
@@ -79,7 +71,7 @@ For peer-to-peer audio/video calls, use CallManager:
       username: '+255788811191',
     );
 
-    // Create CallManager (uses global XMPP connection)
+    // Create CallManager (uses global connection)
     final callManager = await client.createCallManager(
       nxtoken: nxResponse['token'],
       nxid: nxResponse['jid'],
