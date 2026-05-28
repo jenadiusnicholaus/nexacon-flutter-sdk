@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../core/client.dart';
 import '../core/xmpp_manager.dart';
+import 'calls.dart';
 import 'webrtc.dart';
 import 'signaling.dart';
 import '../core/exceptions.dart';
@@ -27,6 +28,7 @@ class CallManager {
   String? _myJid;
   String? _myName;
   String? _peerJid;
+  CallType? _callType;
   CallState _callState = CallState.idle;
   Completer<void>? _callResponseCompleter;
 
@@ -145,6 +147,7 @@ class CallManager {
 
     try {
       _setCallState(CallState.calling);
+      _callType = video ? CallType.video : CallType.audio;
 
       _currentRoomId = 'call_${DateTime.now().millisecondsSinceEpoch}';
 
@@ -243,6 +246,8 @@ class CallManager {
     }
 
     try {
+      _callType = video ? CallType.video : CallType.audio;
+
       // Notify caller we accepted
       _signalingService?.sendMessage(
         _signalingService!.createCallResponse(
@@ -440,11 +445,50 @@ class CallManager {
     _setCallState(CallState.ended);
     onCallEnded?.call(reason);
 
+    // Auto-record call analytics
+    _recordCallAnalytics(reason);
+
     // Reset state after delay
     Future.delayed(const Duration(seconds: 1), () {
       _setCallState(CallState.idle);
       _currentRoomId = null;
       _currentCallId = null;
+      _callType = null;
+    });
+  }
+
+  /// Record call analytics automatically
+  void _recordCallAnalytics(String reason) {
+    if (_currentRoomId == null || _callType == null) return;
+
+    // Determine status based on reason
+    CallAnalyticsStatus status;
+    if (reason.contains('rejected')) {
+      status = CallAnalyticsStatus.declined;
+    } else if (reason.contains('Failed') || reason.contains('failed')) {
+      status = CallAnalyticsStatus.failed;
+    } else if (reason.contains('cancelled')) {
+      status = CallAnalyticsStatus.cancelled;
+    } else if (reason.contains('missed')) {
+      status = CallAnalyticsStatus.missed;
+    } else {
+      status = CallAnalyticsStatus.ended;
+    }
+
+    // Get duration (0 for failed/declined/cancelled/missed)
+    final duration =
+        status == CallAnalyticsStatus.ended ? callDuration.inSeconds : 0;
+
+    // Record asynchronously (don't block cleanup)
+    _client.calls.recordCall(
+      room: _currentRoomId!,
+      callType: _callType!,
+      status: status,
+      durationSeconds: duration,
+      metadata: {'reason': reason},
+    ).catchError((e) {
+      print('Failed to record call analytics: $e');
+      return <String, dynamic>{};
     });
   }
 
