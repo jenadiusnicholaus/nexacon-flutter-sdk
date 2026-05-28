@@ -1,10 +1,10 @@
 # Nexacon Flutter SDK
 
-A comprehensive Flutter SDK for Nexacon API, providing plug-and-play P2P calling with WebRTC and NX signaling.
+A comprehensive Flutter SDK for Nexacon API, providing plug-and-play P2P calling with WebRTC and NX signaling, plus real-time messaging with presence and read receipts.
 
 ## Overview
 
-Nexacon Flutter SDK enables developers to integrate peer-to-peer audio and video calling into their Flutter applications with minimal setup. The SDK handles all complex signaling, WebRTC peer connections, and ICE negotiation internally.
+Nexacon Flutter SDK enables developers to integrate peer-to-peer audio and video calling and real-time messaging into their Flutter applications with minimal setup. The SDK handles all complex signaling, WebRTC peer connections, ICE negotiation, XMPP messaging, and presence management internally.
 
 ## Installation
 
@@ -108,6 +108,46 @@ await callManager.webrtcService?.switchCamera();
 callManager.dispose();
 ```
 
+### 7. Real-Time Messaging
+
+```dart
+// Connect XMPP once
+await client.xmppManager.connect(
+  jid: 'user@example.com',
+  password: 'token',
+  wsUrl: 'wss://your-server.com/ws',
+);
+
+// Create messaging manager
+final messagingManager = client.createMessagingManager();
+
+// Listen for messages
+messagingManager.messageStream.listen((message) {
+  print('Message: ${message['message']}');
+});
+
+// Send a message
+messagingManager.sendMessage(
+  to: 'recipient@example.com',
+  message: 'Hello!',
+);
+
+// Send typing indicator
+messagingManager.sendTypingIndicator('recipient@example.com', isTyping: true);
+
+// Send read receipt
+messagingManager.sendReadReceipt('recipient@example.com', 'msg_123');
+
+// Listen for presence changes
+messagingManager.presenceStream.listen((presence) {
+  final isOnline = presence['type'] == null || presence['type'] == 'available';
+  print('User is ${isOnline ? 'online' : 'offline'}');
+});
+
+// Cleanup
+messagingManager.dispose();
+```
+
 ## Platform Configuration
 
 ### Android
@@ -161,7 +201,12 @@ platform :ios, '12.0'
 
 - **NX Token Management**: Generate and refresh NX tokens for signaling
 - **P2P Calling**: Full WebRTC peer-to-peer calling with automatic signaling
-- **Automatic Reconnection**: Built-in WebSocket client with reconnection logic
+- **Real-Time Messaging**: XMPP-based instant messaging with presence
+- **Typing Indicators**: Real-time typing status (XEP-0085)
+- **Read Receipts**: Message delivery and read confirmations (XEP-0184)
+- **Presence Management**: Online/offline status tracking
+- **Message History**: Fetch message history with filters and pagination
+- **Automatic Reconnection**: Built-in WebSocket client with exponential backoff
 - **ICE Management**: Automatic ICE candidate buffering and exchange
 - **Call Controls**: Mute, speaker toggle, camera switch
 - **Duration Tracking**: Built-in call duration timer
@@ -225,6 +270,29 @@ final response = await client.auth.generateXMPPToken(
   username: String,
 );
 ```
+
+### MessagingManager
+
+Real-time messaging with presence and read receipts.
+
+```dart
+final messagingManager = client.createMessagingManager();
+```
+
+#### Streams
+
+- `messageStream` - Incoming chat messages
+- `typingStream` - Typing indicators
+- `readReceiptStream` - Read confirmations
+- `deliveryReceiptStream` - Delivery confirmations (XEP-0184)
+- `presenceStream` - Online/offline status
+
+#### Methods
+
+- `sendMessage({required String to, required String message, String messageType})` - Send message
+- `sendTypingIndicator(String to, {bool isTyping})` - Send typing status
+- `sendReadReceipt(String to, String messageId)` - Send read receipt
+- `dispose()` - Cleanup resources
 
 ## Documentation
 

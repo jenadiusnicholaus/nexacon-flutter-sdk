@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-05-28
+
+### Added
+
+- Real-time messaging with XMPP
+- MessagingManager for instant messaging
+- Typing indicators (XEP-0085)
+- Read receipts (XEP-0184)
+- Delivery receipts support
+- Presence management (online/offline status)
+- Message history API with filters and pagination
+- XmppManager presence stream
+- XmppManager delivery receipt stream
+- Heartbeat for connection keep-alive
+- Automatic reconnection with exponential backoff
+- Enhanced documentation for messaging features
+
+### Changed
+
+- Updated README with messaging examples
+- Updated package description to include messaging
+
 ## [1.0.1] - 2024-05-28
 
 ### Added
