@@ -9,7 +9,6 @@ Welcome to the official documentation for the Nexacon Flutter SDK. This SDK prov
 
    installation
    quickstart
-   platform-config
 
 .. toctree::
    :maxdepth: 2

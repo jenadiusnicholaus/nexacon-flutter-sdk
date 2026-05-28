@@ -1,10 +1,10 @@
 Quick Start Guide
 ================
 
-This guide will help you get started with the Nexacon Flutter SDK in just a few minutes.
+This guide provides a quick overview of the Nexacon Flutter SDK and how to get started with its services.
 
-Step 1: Initialize the Client
------------------------------
+Initialize the Client
+--------------------
 
 Create a ``NexaconClient`` instance with your API credentials:
 
@@ -18,108 +18,50 @@ Create a ``NexaconClient`` instance with your API credentials:
       baseUrl: 'https://nxservice.quantumvision-tech.com/api/v1.0',
     );
 
-Step 2: Generate NX Token
--------------------------
-
-Generate an NX token for signaling:
-
-.. code-block:: dart
-
-    final nxResponse = await client.auth.generateXMPPToken(
-      username: '+255788811191',
-    );
-    final nxtoken = nxResponse['token'];
-    final nxid = nxResponse['jid'];
-    final wsUrl = nxResponse['nxws'];
-
-Step 3: Create CallManager
----------------------------
-
-Initialize the ``CallManager`` with your NX credentials:
-
-.. code-block:: dart
-
-    final callManager = await client.createCallManager(
-      nxtoken: nxtoken,
-      nxid: nxid,
-      wsUrl: wsUrl,
-      name: 'Your Name',
-      onCallStateChanged: (state) {
-        // Handle call state changes
-        print('Call state: $state');
-      },
-      onIncomingCall: (callerName) {
-        // Show incoming call UI
-        print('Incoming call from: $callerName');
-      },
-      onCallEnded: (reason) {
-        // Handle call ended
-        print('Call ended: $reason');
-      },
-      onError: (error) {
-        // Handle errors
-        print('Error: $error');
-      },
-    );
-
-Step 4: Make a Call
+Available Services
 ------------------
 
-Initiate an outgoing call:
+The SDK provides the following services:
 
-.. code-block:: dart
+* `Messaging Service <messaging.html>`_ - Send and receive messages, manage contacts
+* `Calls Service <calls.html>`_ - Initiate and manage 1:1 and group calls, P2P calling
+* `Devices Service <devices.html>`_ - Register and manage devices for push notifications
+* `Rooms Service <rooms.html>`_ - Create and manage group chat rooms
+* `Presence Service <presence.html>`_ - Check user online status and last seen
 
-    await callManager.initiateCall(
-      to: '+255788811192',
-      audio: true,
-      video: false,
-    );
-
-Accept an incoming call:
-
-.. code-block:: dart
-
-    await callManager.acceptCall(
-      audio: true,
-      video: false,
-    );
-
-Step 5: Call Controls
---------------------
-
-Control call features:
-
-.. code-block:: dart
-
-    // Mute/Unmute
-    callManager.webrtcService?.toggleAudio(false);
-
-    // Speaker toggle
-    callManager.webrtcService?.toggleSpeaker(true);
-
-    // Switch camera
-    await callManager.webrtcService?.switchCamera();
-
-Step 6: End Call
----------------
-
-End the current call:
-
-.. code-block:: dart
-
-    await callManager.endCall();
-
-Step 7: Cleanup
+Quick Examples
 --------------
 
-Dispose resources when done:
+**Send a Message:**
 
 .. code-block:: dart
 
-    callManager.dispose();
+    await client.messaging.send(
+      message: 'Hello!',
+      recipients: ['+255788811192'],
+    );
+
+**Initiate a Call:**
+
+.. code-block:: dart
+
+    await client.calls.initiateCall(
+      to: '+255788811192',
+      callType: CallType.video,
+    );
+
+**Register a Device:**
+
+.. code-block:: dart
+
+    await client.devices.register(
+      fcmToken: 'your_fcm_token',
+      platform: Platform.android,
+    );
 
 Next Steps
 ----------
 
 * Learn about `Platform Configuration <platform-config.html>`_
-* Explore the `API Reference <api.html>`_
+* Explore individual `Services <#available-services>`_ for detailed documentation
+* Check the `API Reference <api.html>`_ for complete API documentation

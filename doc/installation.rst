@@ -29,6 +29,58 @@ Install the package:
 
     flutter pub get
 
+Platform Configuration
+----------------------
+
+Android
+~~~~~~~
+
+Add permissions to ``android/app/src/main/AndroidManifest.xml``:
+
+.. code-block:: xml
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+
+Set minimum SDK version in ``android/app/build.gradle``:
+
+.. code-block:: gradle
+
+    android {
+        defaultConfig {
+            minSdkVersion 21
+        }
+    }
+
+iOS
+~~~
+
+Add permissions to ``ios/Runner/Info.plist``:
+
+.. code-block:: xml
+
+    <key>NSCameraUsageDescription</key>
+    <string>Camera access is required for video calls</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Microphone access is required for audio calls</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>audio</string>
+        <string>voip</string>
+    </array>
+
+Set minimum iOS version in ``ios/Podfile``:
+
+.. code-block:: ruby
+
+    platform :ios, '12.0'
+
 Verify Installation
 ------------------
 
