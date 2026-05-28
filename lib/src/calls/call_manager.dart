@@ -1,10 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../core/client.dart';
+import '../core/xmpp_manager.dart';
 import 'webrtc.dart';
 import 'signaling.dart';
-import '../xmpp/xmpp_client.dart';
 import '../core/exceptions.dart';
 
 /// Call state enum
@@ -19,9 +18,9 @@ enum CallState {
 /// Call Manager - Orchestrates full P2P call flow
 class CallManager {
   final NexaconClient _client;
+  final XmppManager _xmppManager;
   WebRTCService? _webrtcService;
   SignalingService? _signalingService;
-  XmppClient? _xmppClient;
 
   String? _currentRoomId;
   String? _currentCallId;
@@ -40,7 +39,8 @@ class CallManager {
   final Function(MediaStream)? onRemoteStream;
 
   CallManager(
-    this._client, {
+    this._client,
+    this._xmppManager, {
     this.onCallStateChanged,
     this.onIncomingCall,
     this.onCallEnded,
@@ -50,7 +50,7 @@ class CallManager {
   });
 
   /// Initialize the call manager with NX credentials
-  /// This will connect to NX server and handle signaling internally
+  /// Uses the global XmppManager for signaling
   Future<bool> initialize({
     required String nxid,
     required String nxtoken,
@@ -60,9 +60,8 @@ class CallManager {
     _myJid = nxid;
     _myName = name ?? nxid.split('@')[0];
 
-    // Initialize NX client
-    _xmppClient = XmppClient();
-    final connected = await _xmppClient!.connect(
+    // Connect via global XMPP manager
+    final connected = await _xmppManager.connect(
       jid: nxid,
       password: nxtoken,
       wsUrl: wsUrl,
@@ -73,26 +72,23 @@ class CallManager {
       return false;
     }
 
-    // Listen for NX messages
-    _xmppClient!.messageStream.listen((message) {
-      if (message.body != null) {
-        try {
-          final data = jsonDecode(message.body!);
-          final signalingMessage = SignalingMessage.fromJson(data);
-          _handleSignalingMessage(signalingMessage);
-        } catch (e) {
-          print('Error parsing NX message: $e');
-        }
+    // Listen for signaling messages from global XMPP
+    _xmppManager.signalingStream.listen((data) {
+      try {
+        final signalingMessage = SignalingMessage.fromJson(data);
+        _handleSignalingMessage(signalingMessage);
+      } catch (e) {
+        print('Error parsing signaling message: $e');
       }
     });
 
-    // Initialize signaling service with NX send capability
+    // Initialize signaling service with XMPP send capability
     _signalingService = SignalingService(
       onMessageReceived: _handleSignalingMessage,
       onSendMessage: (message) {
-        // Send via NX to peer
+        // Send via global XMPP to peer
         if (_peerJid != null) {
-          _xmppClient?.sendMessage(_peerJid!, message);
+          _xmppManager.sendMessage(_peerJid!, message);
         }
       },
     );
@@ -461,8 +457,7 @@ class CallManager {
   /// Cleanup resources
   void dispose() {
     _webrtcService?.endCall();
-    _xmppClient?.disconnect();
-    _xmppClient?.dispose();
     _setCallState(CallState.idle);
+    // Note: Don't disconnect XMPP manager here - it's shared
   }
 }

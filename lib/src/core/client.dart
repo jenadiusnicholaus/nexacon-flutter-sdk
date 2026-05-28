@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../core/exceptions.dart';
+import '../core/xmpp_manager.dart';
 import '../auth/auth.dart';
 import '../messaging/messaging.dart';
+import '../messaging/messaging_manager.dart';
 import '../calls/calls.dart';
 import '../calls/call_manager.dart';
 import '../devices/devices.dart';
@@ -26,6 +28,7 @@ class NexaconClient {
   late final Devices devices;
   late final Rooms rooms;
   late final Presence presence;
+  late final XmppManager xmppManager;
 
   NexaconClient({
     required this.apiKey,
@@ -34,6 +37,7 @@ class NexaconClient {
     this.timeout = const Duration(seconds: 30),
   }) {
     _httpClient = http.Client();
+    xmppManager = XmppManager();
     auth = Auth(this);
     messaging = Messaging(this);
     calls = Calls(this);
@@ -134,10 +138,11 @@ class NexaconClient {
 
   void close() {
     _httpClient.close();
+    xmppManager.dispose();
   }
 
   /// Create a CallManager instance for P2P calling
-  /// Automatically initializes NX connection if nxtoken is provided
+  /// Automatically initializes XMPP connection if credentials provided
   Future<CallManager> createCallManager({
     String? nxtoken,
     String? nxid,
@@ -152,6 +157,7 @@ class NexaconClient {
   }) async {
     final callManager = CallManager(
       this,
+      xmppManager,
       onCallStateChanged: onCallStateChanged,
       onIncomingCall: onIncomingCall,
       onCallEnded: onCallEnded,
@@ -174,5 +180,11 @@ class NexaconClient {
     }
 
     return callManager;
+  }
+
+  /// Create a MessagingManager for real-time chat
+  /// XMPP must be connected first via xmppManager.connect()
+  MessagingManager createMessagingManager() {
+    return MessagingManager(xmppManager);
   }
 }
