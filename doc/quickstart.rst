@@ -41,7 +41,7 @@ Quick Examples
       recipients: ['+255788811192'],
     );
 
-**Initiate a Call:**
+**Initiate a 1:1 Call:**
 
 .. code-block:: dart
 
@@ -49,6 +49,37 @@ Quick Examples
       to: '+255788811192',
       callType: CallType.video,
     );
+
+**Initiate a P2P Call:**
+
+.. code-block:: dart
+
+    await client.calls.initiateP2PCall(
+      to: '+255788811192',
+    );
+
+**Initiate a Group Call:**
+
+.. code-block:: dart
+
+    await client.calls.initiateGroupCall(
+      participants: ['+255788811192', '+255788811193'],
+      callType: CallType.audio,
+    );
+
+**Decline a Call:**
+
+.. code-block:: dart
+
+    await client.calls.declineCall(room);
+
+**Get WebRTC Credentials:**
+
+.. code-block:: dart
+
+    final credentials = await client.calls.getWebRTCCredentials();
+
+For more details, see the full `Calls Service documentation <calls.html>`_.
 
 **Register a Device:**
 
