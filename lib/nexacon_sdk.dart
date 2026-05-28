@@ -1,13 +1,14 @@
 library nexacon_sdk;
 
-export 'src/exceptions.dart';
-export 'src/client.dart';
-export 'src/auth.dart';
-export 'src/messaging.dart';
-export 'src/calls.dart';
-export 'src/devices.dart';
-export 'src/rooms.dart';
-export 'src/presence.dart';
-export 'src/call_manager.dart';
-export 'src/webrtc.dart';
-export 'src/signaling.dart';
+export 'src/core/exceptions.dart';
+export 'src/core/client.dart';
+export 'src/auth/auth.dart';
+export 'src/messaging/messaging.dart';
+export 'src/calls/calls.dart';
+export 'src/calls/call_manager.dart';
+export 'src/calls/webrtc.dart';
+export 'src/calls/signaling.dart';
+export 'src/devices/devices.dart';
+export 'src/rooms/rooms.dart';
+export 'src/presence/presence.dart';
+export 'src/xmpp/xmpp_client.dart';

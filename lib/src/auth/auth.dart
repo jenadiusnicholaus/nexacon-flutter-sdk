@@ -1,5 +1,5 @@
-import 'client.dart';
-import 'exceptions.dart';
+import '../core/client.dart';
+import '../core/exceptions.dart';
 
 /// Authentication Service - NX Token Management
 class Auth {

@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'exceptions.dart';
-import 'auth.dart';
-import 'messaging.dart';
-import 'calls.dart';
-import 'devices.dart';
-import 'rooms.dart';
-import 'presence.dart';
-import 'call_manager.dart';
+import '../core/exceptions.dart';
+import '../auth/auth.dart';
+import '../messaging/messaging.dart';
+import '../calls/calls.dart';
+import '../calls/call_manager.dart';
+import '../devices/devices.dart';
+import '../rooms/rooms.dart';
+import '../presence/presence.dart';
 
 /// Nexacon SDK Main Client
 class NexaconClient {

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'client.dart';
+import '../core/client.dart';
 import 'webrtc.dart';
 import 'signaling.dart';
-import 'xmpp_client.dart';
-import 'exceptions.dart';
+import '../xmpp/xmpp_client.dart';
+import '../core/exceptions.dart';
 
 /// Call state enum
 enum CallState {

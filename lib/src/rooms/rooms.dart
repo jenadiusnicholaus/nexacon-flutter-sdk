@@ -1,5 +1,5 @@
-import 'client.dart';
-import 'exceptions.dart';
+import '../core/client.dart';
+import '../core/exceptions.dart';
 
 /// Rooms Service - Group chat room management
 class Rooms {

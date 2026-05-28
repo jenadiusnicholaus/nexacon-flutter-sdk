@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'exceptions.dart';
+import '../core/exceptions.dart';
 
 /// WebRTC Service - Manages peer connections and media streams
 class WebRTCService {

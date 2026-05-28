@@ -1,5 +1,5 @@
-import 'client.dart';
-import 'exceptions.dart';
+import '../core/client.dart';
+import '../core/exceptions.dart';
 
 /// Call types enum
 enum CallType { audio, video, p2p, group }

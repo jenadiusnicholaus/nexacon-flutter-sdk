@@ -1,4 +1,4 @@
-import 'client.dart';
+import '../core/client.dart';
 
 /// Presence Service - User presence and online status
 class Presence {
