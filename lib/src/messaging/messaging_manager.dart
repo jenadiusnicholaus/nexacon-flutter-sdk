@@ -10,13 +10,35 @@ class MessagingManager {
   // Stream for incoming chat messages
   final _messageController = StreamController<Map<String, dynamic>>.broadcast();
 
+  // Stream for typing indicators
+  final _typingController = StreamController<Map<String, dynamic>>.broadcast();
+
+  // Stream for read receipts
+  final _readReceiptController =
+      StreamController<Map<String, dynamic>>.broadcast();
+
   /// Stream of incoming chat messages
   Stream<Map<String, dynamic>> get messageStream => _messageController.stream;
 
+  /// Stream of typing indicators
+  Stream<Map<String, dynamic>> get typingStream => _typingController.stream;
+
+  /// Stream of read receipts
+  Stream<Map<String, dynamic>> get readReceiptStream =>
+      _readReceiptController.stream;
+
   MessagingManager(this._xmppManager) {
-    // Subscribe to XMPP message stream
+    // Subscribe to XMPP message stream and route by type
     _xmppManager.messageStream.listen((data) {
-      _messageController.add(data);
+      final type = data['type'] as String?;
+      if (type == 'typing') {
+        _typingController.add(data);
+      } else if (type == 'read_receipt') {
+        _readReceiptController.add(data);
+      } else {
+        // Regular chat message
+        _messageController.add(data);
+      }
     });
   }
 
@@ -57,5 +79,7 @@ class MessagingManager {
   /// Cleanup
   void dispose() {
     _messageController.close();
+    _typingController.close();
+    _readReceiptController.close();
   }
 }

@@ -62,4 +62,37 @@ class Messaging {
 
     return _client.request('DELETE', '/nx/contacts/$nxid/');
   }
+
+  /// Get message history for the current user
+  /// Supports filtering by date range, sender, and message type
+  Future<Map<String, dynamic>> getMessageHistory({
+    DateTime? startDate,
+    DateTime? endDate,
+    String? sender,
+    String? messageType,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final params = <String, dynamic>{
+      'page': page,
+      'page_size': pageSize,
+    };
+
+    if (startDate != null) {
+      params['start_date'] =
+          '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}';
+    }
+    if (endDate != null) {
+      params['end_date'] =
+          '${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}';
+    }
+    if (sender != null && sender.isNotEmpty) {
+      params['sender'] = sender;
+    }
+    if (messageType != null && messageType.isNotEmpty) {
+      params['message_type'] = messageType;
+    }
+
+    return _client.request('GET', '/nx/history/', params: params);
+  }
 }
