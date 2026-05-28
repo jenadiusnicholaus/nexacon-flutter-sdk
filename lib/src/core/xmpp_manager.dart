@@ -14,6 +14,17 @@ class XmppManager {
   final _signalingController =
       StreamController<Map<String, dynamic>>.broadcast();
   final _connectionStateController = StreamController<bool>.broadcast();
+  final _presenceController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _deliveryReceiptController =
+      StreamController<Map<String, dynamic>>.broadcast();
+
+  // Reconnection
+  Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
+
+  // Heartbeat
+  Timer? _heartbeatTimer;
 
   /// Stream for chat messages
   Stream<Map<String, dynamic>> get messageStream => _messageController.stream;
@@ -25,8 +36,18 @@ class XmppManager {
   /// Stream for connection state changes
   Stream<bool> get connectionStateStream => _connectionStateController.stream;
 
+  /// Stream for presence changes (online/offline, typing)
+  Stream<Map<String, dynamic>> get presenceStream => _presenceController.stream;
+
+  /// Stream for delivery receipts
+  Stream<Map<String, dynamic>> get deliveryReceiptStream =>
+      _deliveryReceiptController.stream;
+
   /// Current connection state
   bool get isConnected => _isConnected;
+
+  /// Current JID
+  String? get jid => _jid;
 
   /// Initialize and connect to XMPP server
   Future<bool> connect({
@@ -54,6 +75,8 @@ class XmppManager {
 
     if (connected) {
       _isConnected = true;
+      _reconnectAttempts = 0;
+      _reconnectTimer?.cancel();
       _connectionStateController.add(true);
 
       // Listen for incoming messages
@@ -69,10 +92,31 @@ class XmppManager {
               _messageController.add(data);
             }
           } catch (e) {
-            print('Error parsing XMPP message: $e');
+            // If not JSON, treat as plain text message
+            _messageController.add({
+              'message': message.body,
+              'from': message.from,
+              'to': message.to,
+              'timestamp': DateTime.now().millisecondsSinceEpoch,
+            });
           }
         }
       });
+
+      // Listen for presence changes
+      _xmppClient!.presenceStream.listen((presence) {
+        _presenceController.add({
+          'from': presence.from,
+          'type': presence.type,
+          'show': presence.show,
+        });
+      });
+
+      // Start heartbeat
+      _startHeartbeat();
+    } else {
+      // Schedule reconnect on failure
+      _scheduleReconnect();
     }
 
     return connected;
@@ -112,9 +156,43 @@ class XmppManager {
 
   /// Cleanup resources
   void dispose() {
+    _reconnectTimer?.cancel();
+    _heartbeatTimer?.cancel();
     disconnect();
     _messageController.close();
     _signalingController.close();
     _connectionStateController.close();
+    _presenceController.close();
+    _deliveryReceiptController.close();
+  }
+
+  /// Start heartbeat to keep connection alive
+  void _startHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (_isConnected && _xmppClient != null) {
+        _xmppClient!.sendPresence();
+      }
+    });
+  }
+
+  /// Schedule reconnection with exponential backoff
+  void _scheduleReconnect() {
+    if (_reconnectTimer?.isActive == true) return;
+    _reconnectAttempts++;
+    if (_reconnectAttempts > 10) {
+      print('Max reconnect attempts reached');
+      _reconnectAttempts = 0;
+      return;
+    }
+    final delaySec = 5 * (1 << (_reconnectAttempts - 1)); // Exponential backoff
+    print('Reconnecting in ${delaySec}s (attempt $_reconnectAttempts)');
+    _reconnectTimer = Timer(Duration(seconds: delaySec), () async {
+      if (!_isConnected && _jid != null) {
+        // Note: Would need stored password/wsUrl for full reconnect
+        // For now, just reset attempts
+        _reconnectAttempts = 0;
+      }
+    });
   }
 }

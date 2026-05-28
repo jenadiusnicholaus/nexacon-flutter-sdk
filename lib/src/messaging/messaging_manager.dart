@@ -17,6 +17,14 @@ class MessagingManager {
   final _readReceiptController =
       StreamController<Map<String, dynamic>>.broadcast();
 
+  // Stream for delivery receipts
+  final _deliveryReceiptController =
+      StreamController<Map<String, dynamic>>.broadcast();
+
+  // Stream for presence changes
+  final _presenceController =
+      StreamController<Map<String, dynamic>>.broadcast();
+
   /// Stream of incoming chat messages
   Stream<Map<String, dynamic>> get messageStream => _messageController.stream;
 
@@ -26,6 +34,13 @@ class MessagingManager {
   /// Stream of read receipts
   Stream<Map<String, dynamic>> get readReceiptStream =>
       _readReceiptController.stream;
+
+  /// Stream of delivery receipts
+  Stream<Map<String, dynamic>> get deliveryReceiptStream =>
+      _deliveryReceiptController.stream;
+
+  /// Stream of presence changes (online/offline)
+  Stream<Map<String, dynamic>> get presenceStream => _presenceController.stream;
 
   MessagingManager(this._xmppManager) {
     // Subscribe to XMPP message stream and route by type
@@ -39,6 +54,27 @@ class MessagingManager {
         // Regular chat message
         _messageController.add(data);
       }
+    });
+
+    // Subscribe to presence stream
+    _xmppManager.presenceStream.listen((data) {
+      final type = data['type'] as String?;
+      if (type == 'composing' || type == 'paused' || type == 'active') {
+        // Typing indicators via presence (XEP-0085)
+        _typingController.add({
+          'from': data['from'],
+          'isTyping': type == 'composing',
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        });
+      } else {
+        // Regular presence (online/offline)
+        _presenceController.add(data);
+      }
+    });
+
+    // Subscribe to delivery receipt stream
+    _xmppManager.deliveryReceiptStream.listen((data) {
+      _deliveryReceiptController.add(data);
     });
   }
 
@@ -81,5 +117,7 @@ class MessagingManager {
     _messageController.close();
     _typingController.close();
     _readReceiptController.close();
+    _deliveryReceiptController.close();
+    _presenceController.close();
   }
 }

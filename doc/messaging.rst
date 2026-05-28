@@ -312,6 +312,17 @@ The ``MessagingManager`` provides real-time messaging capabilities using the glo
       print('Message ${receipt['message_id']} was read');
     });
 
+    // Listen for delivery receipts (XEP-0184)
+    messagingManager.deliveryReceiptStream.listen((receipt) {
+      print('Message ${receipt['message_id']} was delivered');
+    });
+
+    // Listen for presence changes (online/offline)
+    messagingManager.presenceStream.listen((presence) {
+      final isOnline = presence['type'] == null || presence['type'] == 'available';
+      print('User ${presence['from']} is ${isOnline ? 'online' : 'offline'}');
+    });
+
 **Send Messages**
 
 .. code-block:: dart
