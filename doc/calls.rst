@@ -1,12 +1,121 @@
 Calls Service
 =============
 
-The ``Calls`` service handles all call operations — 1:1 audio/video calls, group calls, and peer-to-peer WebRTC calls.
+The ``Calls`` service handles all call operations — 1:1 audio/video calls, group calls, and full peer-to-peer WebRTC calls with the ``CallManager``.
 
 .. code-block:: dart
 
     // Access via client
     final calls = client.calls;
+
+----
+
+P2P Calling with CallManager
+-----------------------------
+
+For full peer-to-peer calling (audio/video), use the built-in ``CallManager``. It handles NX signaling, WebRTC peer connections, ICE negotiation, and call lifecycle automatically.
+
+**Step 1: Generate NX Token**
+
+.. code-block:: dart
+
+    final nxResponse = await client.auth.generateXMPPToken(
+      username: '+255788811191',
+    );
+    final nxtoken = nxResponse['token'];
+    final nxid = nxResponse['jid'];
+    final wsUrl = nxResponse['nxws'];
+
+**Step 2: Create CallManager**
+
+.. code-block:: dart
+
+    final callManager = await client.createCallManager(
+      nxtoken: nxtoken,
+      nxid: nxid,
+      wsUrl: wsUrl,
+      name: 'Your Name',
+      onCallStateChanged: (state) {
+        // Handle call state changes
+        print('Call state: $state');
+      },
+      onIncomingCall: (callerName) {
+        // Show incoming call UI
+        print('Incoming call from: $callerName');
+      },
+      onCallEnded: (reason) {
+        // Handle call ended
+        print('Call ended: $reason');
+      },
+      onError: (error) {
+        // Handle errors
+        print('Error: $error');
+      },
+    );
+
+**Step 3: Make a Call**
+
+.. code-block:: dart
+
+    // Outgoing call
+    await callManager.initiateCall(
+      to: '+255788811192',
+      audio: true,
+      video: false,
+    );
+
+    // Accept incoming call
+    await callManager.acceptCall(
+      audio: true,
+      video: false,
+    );
+
+    // Reject incoming call
+    await callManager.rejectCall();
+
+    // End call
+    await callManager.endCall();
+
+**Step 4: Call Controls**
+
+.. code-block:: dart
+
+    // Mute / Unmute
+    callManager.webrtcService?.toggleAudio(false);
+
+    // Speaker toggle
+    callManager.webrtcService?.toggleSpeaker(true);
+
+    // Switch front/back camera
+    await callManager.webrtcService?.switchCamera();
+
+**Step 5: Cleanup**
+
+.. code-block:: dart
+
+    callManager.dispose();
+
+----
+
+Call States
+-----------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - State
+     - Description
+   * - ``CallState.idle``
+     - No active call
+   * - ``CallState.calling``
+     - Outgoing call in progress
+   * - ``CallState.incoming``
+     - Incoming call received
+   * - ``CallState.connected``
+     - Call established and connected
+   * - ``CallState.ended``
+     - Call has ended
 
 ----
 
