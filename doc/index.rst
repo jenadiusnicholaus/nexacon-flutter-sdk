@@ -5,17 +5,27 @@ Welcome to the official documentation for the Nexacon Flutter SDK. This SDK prov
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting Started:
 
    installation
    quickstart
    platform-config
-   api
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Services:
+
    messaging
    calls
    devices
    rooms
    presence
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference:
+
+   api
 
 Overview
 --------
@@ -38,15 +48,14 @@ Features
 * Duration Tracking
 * Cross-platform Support
 
-Getting Help
-------------
+Services
+--------
 
-* `API Reference <api.html>`_
-* `Messaging Service <messaging.html>`_
-* `Calls Service <calls.html>`_
-* `Devices Service <devices.html>`_
-* `Rooms Service <rooms.html>`_
-* `Presence Service <presence.html>`_
-* `Installation Guide <installation.html>`_
-* `Quick Start <quickstart.html>`_
-* `Platform Configuration <platform-config.html>`_
+The SDK provides the following services:
+
+* **Messaging**: Send and receive messages, manage contacts
+* **Calls**: Initiate and manage 1:1 and group calls
+* **Devices**: Register and manage devices for push notifications
+* **Rooms**: Create and manage group chat rooms
+* **Presence**: Check user online status and last seen
+* **CallManager**: P2P calling with automatic signaling and WebRTC
