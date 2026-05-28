@@ -372,3 +372,127 @@ A map containing ``iceServers``, ``username``, and ``password`` for use with the
 
     final credentials = await client.calls.getWebRTCCredentials();
     final iceServers = credentials['iceServers'];
+
+----
+
+recordCall
+~~~~~~~~~~
+
+Record a call event for analytics. Call this after every call ends, fails, is declined, or is missed to track call history.
+
+**Signature**
+
+.. code-block:: dart
+
+    Future<Map<String, dynamic>> recordCall({
+      required String room,
+      required CallType callType,
+      required CallAnalyticsStatus status,
+      int durationSeconds = 0,
+      Map<String, dynamic>? metadata,
+    })
+
+**Parameters**
+
+.. list-table::
+   :widths: 22 18 60
+   :header-rows: 1
+
+   * - Parameter
+     - Type
+     - Description
+   * - ``room``
+     - String
+     - The room identifier of the call
+   * - ``callType``
+     - CallType
+     - Type of call: ``audio``, ``video``, or ``p2p``
+   * - ``status``
+     - CallAnalyticsStatus
+     - Outcome: ``ended``, ``failed``, ``declined``, or ``missed``
+   * - ``durationSeconds``
+     - int
+     - Duration of the call in seconds (0 for failed/declined/missed)
+   * - ``metadata``
+     - Map<String, dynamic>?
+     - Optional extra data (e.g. who ended the call, error message)
+
+**Analytics Status Values**
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status
+     - Description
+   * - ``CallAnalyticsStatus.ended``
+     - Call completed successfully
+   * - ``CallAnalyticsStatus.failed``
+     - Call failed (e.g. ICE connection error)
+   * - ``CallAnalyticsStatus.declined``
+     - Recipient declined the call
+   * - ``CallAnalyticsStatus.missed``
+     - Recipient did not answer
+
+**Examples**
+
+Record a completed call:
+
+.. code-block:: dart
+
+    await client.calls.recordCall(
+      room: 'room_abc123',
+      callType: CallType.video,
+      status: CallAnalyticsStatus.ended,
+      durationSeconds: 120,
+      metadata: {'ended_by': 'caller', 'is_group': false},
+    );
+
+Record a failed call:
+
+.. code-block:: dart
+
+    await client.calls.recordCall(
+      room: 'room_xyz789',
+      callType: CallType.audio,
+      status: CallAnalyticsStatus.failed,
+      durationSeconds: 0,
+      metadata: {'error': 'ICE connection failed'},
+    );
+
+Record a declined call:
+
+.. code-block:: dart
+
+    await client.calls.recordCall(
+      room: 'room_declined123',
+      callType: CallType.video,
+      status: CallAnalyticsStatus.declined,
+    );
+
+**Usage with CallManager**
+
+Hook into the ``onCallEnded`` and ``onError`` callbacks to record automatically:
+
+.. code-block:: dart
+
+    final callManager = await client.createCallManager(
+      // ...
+      onCallEnded: (reason) async {
+        await client.calls.recordCall(
+          room: currentRoomId,
+          callType: CallType.video,
+          status: CallAnalyticsStatus.ended,
+          durationSeconds: callManager.callDuration?.inSeconds ?? 0,
+          metadata: {'ended_by': reason},
+        );
+      },
+      onError: (error) async {
+        await client.calls.recordCall(
+          room: currentRoomId,
+          callType: CallType.video,
+          status: CallAnalyticsStatus.failed,
+          metadata: {'error': error},
+        );
+      },
+    );

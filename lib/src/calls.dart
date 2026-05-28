@@ -4,6 +4,9 @@ import 'exceptions.dart';
 /// Call types enum
 enum CallType { audio, video, p2p }
 
+/// Call analytics status enum
+enum CallAnalyticsStatus { ended, failed, declined, missed }
+
 /// Calls Service
 class Calls {
   final NexaconClient _client;
@@ -112,5 +115,26 @@ class Calls {
     }
 
     return _client.request('POST', '/nx/webrtc/call/', data: data);
+  }
+
+  /// Record a call event for analytics (ended, failed, declined, missed)
+  Future<Map<String, dynamic>> recordCall({
+    required String room,
+    required CallType callType,
+    required CallAnalyticsStatus status,
+    int durationSeconds = 0,
+    Map<String, dynamic>? metadata,
+  }) async {
+    if (room.isEmpty) {
+      throw ValidationException('Room is required');
+    }
+
+    return _client.request('POST', '/nx/call-analytics/', data: {
+      'room': room,
+      'call_type': callType.name,
+      'duration_seconds': durationSeconds,
+      'status': status.name,
+      'metadata': metadata ?? {},
+    });
   }
 }
