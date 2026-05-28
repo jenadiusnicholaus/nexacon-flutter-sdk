@@ -190,6 +190,31 @@ Set minimum iOS version in `ios/Podfile`:
 platform :ios, '12.0'
 ```
 
+### Linux
+
+No additional configuration required. The SDK works out of the box on Linux.
+
+### macOS
+
+Add permissions to `macos/Runner/DebugProfile.entitlements` and `Release.entitlements`:
+
+```xml
+<key>com.apple.security.device.camera</key>
+<true/>
+<key>com.apple.security.device.microphone</key>
+<true/>
+<key>com.apple.security.network.client</key>
+<true/>
+```
+
+### Web
+
+No additional configuration required. The SDK works in modern browsers with WebRTC support.
+
+### Windows
+
+No additional configuration required. The SDK works out of the box on Windows.
+
 ## Features
 
 - **NX Token Management**: Generate and refresh NX tokens for signaling
@@ -203,7 +228,7 @@ platform :ios, '12.0'
 - **ICE Management**: Automatic ICE candidate buffering and exchange
 - **Call Controls**: Mute, speaker toggle, camera switch
 - **Duration Tracking**: Built-in call duration timer
-- **Cross-platform**: Works on iOS, Android, Web, Desktop
+- **Cross-platform**: Works on Android, iOS, Linux, macOS, Web, Windows
 
 ## Call States
 
