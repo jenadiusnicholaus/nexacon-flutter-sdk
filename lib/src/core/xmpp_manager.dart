@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import '../xmpp/xmpp_client.dart';
 
-/// Global XMPP connection manager
-/// Maintains a single XMPP connection for both chat and call signaling
+/// Global connection manager (internal)
+/// Maintains a single connection for both chat and call signaling
 class XmppManager {
   XmppClient? _xmppClient;
   String? _jid;

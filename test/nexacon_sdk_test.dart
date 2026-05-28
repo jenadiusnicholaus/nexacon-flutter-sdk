@@ -11,7 +11,6 @@ void main() {
       );
       expect(client.apiKey, 'test_key');
       expect(client.secretKey, 'test_secret');
-      expect(client.xmppManager, isNotNull);
       client.close();
     });
 
@@ -22,7 +21,6 @@ void main() {
       );
       expect(client.apiKey, 'test_key');
       expect(client.secretKey, 'test_secret');
-      expect(client.xmppManager, isNotNull);
       client.close();
     });
 
@@ -54,33 +52,17 @@ void main() {
     });
   });
 
-  group('XmppManager', () {
-    test('initializes with streams', () {
-      final xmppManager = XmppManager();
-      expect(xmppManager.messageStream, isNotNull);
-      expect(xmppManager.signalingStream, isNotNull);
-      expect(xmppManager.connectionStateStream, isNotNull);
-      expect(xmppManager.isConnected, false);
-      xmppManager.dispose();
-    });
-
-    test('sendMessage throws when not connected', () {
-      final xmppManager = XmppManager();
-      expect(
-        () => xmppManager.sendMessage('test@example.com', 'test'),
-        throwsA(isA<Exception>()),
-      );
-      xmppManager.dispose();
-    });
-  });
-
   group('MessagingManager', () {
-    test('initializes with XmppManager', () {
-      final xmppManager = XmppManager();
-      final messagingManager = MessagingManager(xmppManager);
-      expect(messagingManager.messageStream, isNotNull);
-      messagingManager.dispose();
-      xmppManager.dispose();
+    test('createMessagingManager returns MessagingManager', () {
+      final client = NexaconClient(
+        apiKey: 'test_key',
+        secretKey: 'test_secret',
+      );
+
+      final messagingManager = client.createMessagingManager();
+      expect(messagingManager, isA<MessagingManager>());
+
+      client.close();
     });
   });
 

@@ -2,7 +2,6 @@ library nexacon_sdk;
 
 export 'src/core/exceptions.dart';
 export 'src/core/client.dart';
-export 'src/core/xmpp_manager.dart';
 export 'src/auth/auth.dart';
 export 'src/messaging/messaging.dart';
 export 'src/messaging/messaging_manager.dart';
@@ -13,4 +12,3 @@ export 'src/calls/signaling.dart';
 export 'src/devices/devices.dart';
 export 'src/rooms/rooms.dart';
 export 'src/presence/presence.dart';
-export 'src/xmpp/xmpp_client.dart';

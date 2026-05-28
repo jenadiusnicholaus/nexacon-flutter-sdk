@@ -271,18 +271,11 @@ Retrieve message history for the current user with optional filters.
 Real-Time Messaging with MessagingManager
 -----------------------------------------
 
-The ``MessagingManager`` provides real-time messaging capabilities using the global XMPP connection. It supports message streams, typing indicators, and read receipts.
+The ``MessagingManager`` provides real-time messaging capabilities using the global connection. It supports message streams, typing indicators, and read receipts.
 
 **Setup**
 
 .. code-block:: dart
-
-    // Connect XMPP once
-    await client.xmppManager.connect(
-      jid: 'user@example.com',
-      password: 'token',
-      wsUrl: 'wss://your-server.com/ws',
-    );
 
     // Create messaging manager
     final messagingManager = client.createMessagingManager();
@@ -312,7 +305,7 @@ The ``MessagingManager`` provides real-time messaging capabilities using the glo
       print('Message ${receipt['message_id']} was read');
     });
 
-    // Listen for delivery receipts (XEP-0184)
+    // Listen for delivery receipts
     messagingManager.deliveryReceiptStream.listen((receipt) {
       print('Message ${receipt['message_id']} was delivered');
     });

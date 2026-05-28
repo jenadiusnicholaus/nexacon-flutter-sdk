@@ -111,13 +111,6 @@ callManager.dispose();
 ### 7. Real-Time Messaging
 
 ```dart
-// Connect XMPP once
-await client.xmppManager.connect(
-  jid: 'user@example.com',
-  password: 'token',
-  wsUrl: 'wss://your-server.com/ws',
-);
-
 // Create messaging manager
 final messagingManager = client.createMessagingManager();
 
@@ -201,12 +194,12 @@ platform :ios, '12.0'
 
 - **NX Token Management**: Generate and refresh NX tokens for signaling
 - **P2P Calling**: Full WebRTC peer-to-peer calling with automatic signaling
-- **Real-Time Messaging**: XMPP-based instant messaging with presence
-- **Typing Indicators**: Real-time typing status (XEP-0085)
-- **Read Receipts**: Message delivery and read confirmations (XEP-0184)
+- **Real-Time Messaging**: Instant messaging with presence
+- **Typing Indicators**: Real-time typing status
+- **Read Receipts**: Message delivery and read confirmations
 - **Presence Management**: Online/offline status tracking
 - **Message History**: Fetch message history with filters and pagination
-- **Automatic Reconnection**: Built-in WebSocket client with exponential backoff
+- **Automatic Reconnection**: Built-in connection with exponential backoff
 - **ICE Management**: Automatic ICE candidate buffering and exchange
 - **Call Controls**: Mute, speaker toggle, camera switch
 - **Duration Tracking**: Built-in call duration timer

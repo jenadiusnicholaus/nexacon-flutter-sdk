@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../core/xmpp_manager.dart';
 
 /// Real-time messaging manager
-/// Uses global XMPP connection for instant messaging
+/// Uses global connection for instant messaging
 class MessagingManager {
   final XmppManager _xmppManager;
 

@@ -44,8 +44,8 @@ class XmppPresence {
   XmppPresence({this.from, this.type, this.show});
 }
 
-/// Pure Dart WebSocket-based XMPP client.
-/// Connects via wss:// like the web Strophe.js client.
+/// Pure Dart WebSocket-based client.
+/// Connects via wss:// for real-time communication.
 class XmppClient {
   ws_client.WebSocket? _socket;
   XmppState _state = XmppState.disconnected;
@@ -131,14 +131,14 @@ class XmppClient {
       // Wait for Connected state, then send stream open
       await _socket!.connection
           .firstWhere(
-            (s) => s is ws_client.Connected || s is ws_client.Disconnected,
-          )
+        (s) => s is ws_client.Connected || s is ws_client.Disconnected,
+      )
           .timeout(
-            const Duration(seconds: 15),
-            onTimeout: () {
-              throw Exception('WebSocket connection timed out');
-            },
-          );
+        const Duration(seconds: 15),
+        onTimeout: () {
+          throw Exception('WebSocket connection timed out');
+        },
+      );
 
       final connState = _socket!.connection.state;
       if (connState is ws_client.Disconnected) {
@@ -217,8 +217,7 @@ class XmppClient {
       throw Exception('Not authenticated');
     }
 
-    final msgId =
-        id ??
+    final msgId = id ??
         'msg_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
     final stanza =
         '<message type="chat" to="${_escapeXml(to)}" id="$msgId" from="${_escapeXml(_boundJid ?? _jid!)}">'
@@ -291,8 +290,7 @@ class XmppClient {
 
   void _sendStreamOpen() {
     // RFC 7395: XMPP over WebSocket uses <open> frame
-    final open =
-        '<open xmlns="urn:ietf:params:xml:ns:xmpp-framing" '
+    final open = '<open xmlns="urn:ietf:params:xml:ns:xmpp-framing" '
         'to="$_domain" '
         'version="1.0"/>';
     _send(open);
@@ -420,8 +418,7 @@ class XmppClient {
     final authString = '\u0000$username\u0000$_password';
     final base64Auth = base64.encode(utf8.encode(authString));
 
-    final stanza =
-        '<auth xmlns="urn:ietf:params:xml:ns:xmpp-sasl" '
+    final stanza = '<auth xmlns="urn:ietf:params:xml:ns:xmpp-sasl" '
         'mechanism="PLAIN">$base64Auth</auth>';
 
     _send(stanza);
@@ -451,8 +448,7 @@ class XmppClient {
     final resource = _resource?.isNotEmpty == true
         ? _resource
         : 'nexacon_${Random().nextInt(9999)}';
-    final stanza =
-        '<iq type="set" id="bind_1">'
+    final stanza = '<iq type="set" id="bind_1">'
         '<bind xmlns="urn:ietf:params:xml:ns:xmpp-bind">'
         '<resource>$resource</resource>'
         '</bind></iq>';
@@ -486,8 +482,7 @@ class XmppClient {
   }
 
   void _startSession() {
-    final stanza =
-        '<iq type="set" id="session_1">'
+    final stanza = '<iq type="set" id="session_1">'
         '<session xmlns="urn:ietf:params:xml:ns:xmpp-session"/>'
         '</iq>';
     _send(stanza);

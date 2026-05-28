@@ -28,7 +28,7 @@ class NexaconClient {
   late final Devices devices;
   late final Rooms rooms;
   late final Presence presence;
-  late final XmppManager xmppManager;
+  late final XmppManager _xmppManager;
 
   NexaconClient({
     required this.apiKey,
@@ -37,7 +37,7 @@ class NexaconClient {
     this.timeout = const Duration(seconds: 30),
   }) {
     _httpClient = http.Client();
-    xmppManager = XmppManager();
+    _xmppManager = XmppManager();
     auth = Auth(this);
     messaging = Messaging(this);
     calls = Calls(this);
@@ -138,11 +138,11 @@ class NexaconClient {
 
   void close() {
     _httpClient.close();
-    xmppManager.dispose();
+    _xmppManager.dispose();
   }
 
   /// Create a CallManager instance for P2P calling
-  /// Automatically initializes XMPP connection if credentials provided
+  /// Automatically initializes connection if credentials provided
   Future<CallManager> createCallManager({
     String? nxtoken,
     String? nxid,
@@ -157,7 +157,7 @@ class NexaconClient {
   }) async {
     final callManager = CallManager(
       this,
-      xmppManager,
+      _xmppManager,
       onCallStateChanged: onCallStateChanged,
       onIncomingCall: onIncomingCall,
       onCallEnded: onCallEnded,
@@ -166,7 +166,7 @@ class NexaconClient {
       onRemoteStream: onRemoteStream,
     );
 
-    // Auto-initialize XMPP if credentials provided
+    // Auto-initialize connection if credentials provided
     if (nxtoken != null && nxid != null && wsUrl != null) {
       final initialized = await callManager.initialize(
         nxid: nxid,
@@ -175,7 +175,7 @@ class NexaconClient {
         name: name,
       );
       if (!initialized) {
-        onError?.call('Failed to initialize XMPP connection');
+        onError?.call('Failed to initialize connection');
       }
     }
 
@@ -183,8 +183,8 @@ class NexaconClient {
   }
 
   /// Create a MessagingManager for real-time chat
-  /// XMPP must be connected first via xmppManager.connect()
+  /// Connection must be established first
   MessagingManager createMessagingManager() {
-    return MessagingManager(xmppManager);
+    return MessagingManager(_xmppManager);
   }
 }
