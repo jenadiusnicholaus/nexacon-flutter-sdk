@@ -32,9 +32,7 @@ flutter:
 # Platform support
 platforms:
   android:
-    minSdkVersion: 21
   ios:
-    minSdkVersion: 12.0
   linux:
   macos:
   web:
