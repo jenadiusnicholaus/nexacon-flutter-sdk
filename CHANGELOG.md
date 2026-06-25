@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2026-06-25
+
+### Fixed
+
+- Fixed repository URL to match actual GitHub repository
+- Fixed issue tracker URL to match actual GitHub repository
+- Added minimum SDK versions for Android (21) and iOS (12.0) to improve platform support score
+- Updated dependencies to latest versions:
+  - http: ^1.1.0 → ^1.2.0
+  - json_annotation: ^4.8.0 → ^4.12.0
+  - flutter_webrtc: ^0.9.48 → ^1.5.2
+  - web_socket_client: ^0.1.2 → ^0.2.1
+  - flutter_lints: ^3.0.0 → ^6.0.0
+  - json_serializable: ^6.7.0 → ^6.14.0
+  - mockito: ^5.4.4 → ^5.6.4
+
 ## [1.1.4] - 2026-05-28
 
 ### Changed
