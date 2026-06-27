@@ -201,6 +201,49 @@ class NexaconSDK {
     }
   }
 
+  /// Accept an incoming call using data from a push notification payload.
+  ///
+  /// Use this when FCM/push already delivered the call data (roomId, callerJid)
+  /// so you don't need to wait for the XMPP callInvitation signal.
+  /// This is the correct path when the app is opened from a push notification.
+  ///
+  /// For the XMPP-first path (app already in foreground), use [acceptWhenReady].
+  ///
+  /// [username] Your username/phone number
+  /// [roomId] Room ID from the FCM push payload
+  /// [callerJid] Caller's JID from the FCM push payload
+  /// [callerName] Caller display name (optional)
+  /// [name] Your display name (optional)
+  /// [audio] Enable audio (default: true)
+  /// [video] Enable video (default: false)
+  Future<void> acceptFromNotification({
+    required String username,
+    required String roomId,
+    required String callerJid,
+    String? callerName,
+    String? name,
+    bool audio = true,
+    bool video = false,
+  }) async {
+    try {
+      print('📲 Accepting call from push notification: room=$roomId');
+      await initialize(username: username, name: name);
+
+      // Inject call state directly — no need to wait for XMPP signal
+      _callManager!.prepareIncomingCall(
+        roomId: roomId,
+        callerJid: callerJid,
+        callerName: callerName ?? 'Unknown',
+      );
+
+      await _callManager!.acceptCall(audio: audio, video: video);
+      print('✅ Call accepted from notification');
+    } catch (e) {
+      onError?.call('Failed to accept call from notification: $e');
+      rethrow;
+    }
+  }
+
   /// Reject an incoming call
   void rejectCall() {
     if (_callManager == null) {

@@ -243,6 +243,21 @@ class CallManager {
     }
   }
 
+  /// Inject incoming call state from push notification data.
+  /// Use this when FCM/push payload already contains roomId and callerJid
+  /// so there is no need to wait for the XMPP callInvitation signal.
+  void prepareIncomingCall({
+    required String roomId,
+    required String callerJid,
+    String callerName = 'Unknown',
+  }) {
+    if (_callState != CallState.idle) return;
+    _currentRoomId = roomId;
+    _peerJid = callerJid;
+    _setCallState(CallState.incoming);
+    onIncomingCall?.call(callerName);
+  }
+
   /// Handle incoming call invitation
   void handleIncomingCall(SignalingMessage message) {
     if (_callState != CallState.idle) {

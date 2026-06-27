@@ -180,7 +180,11 @@ await sdk.dispose();
 
 ## Quick Start — Incoming Call
 
-For incoming calls, use `initialize()` to connect, then `acceptCall()` to answer:
+Incoming calls can be handled via two paths:
+
+### Path 1: XMPP (app in foreground)
+
+Use `acceptWhenReady()` when the app is already open — it waits for the XMPP `callInvitation` signal:
 
 ```dart
 import 'package:nexacon_sdk/nexacon_sdk.dart';
@@ -196,18 +200,32 @@ sdk.onIncomingCall     = (name)  => print('📞 Incoming from: $name');
 sdk.onCallEnded        = (reason)=> print('📞 Ended: $reason');
 sdk.onError            = (error) => print('❌ Error: $error');
 
-// Step 1: Initialize (get token, connect to signaling server)
-await sdk.initialize(username: '+255788811191');
-
-// Step 2: Accept the incoming call
-await sdk.acceptCall(audio: true, video: false);
-
-// Or reject it
-// sdk.rejectCall();
+// Initialize and automatically accept when XMPP signal arrives
+await sdk.acceptWhenReady(
+  username: '+255788811191',
+  audio: true,
+  video: false,
+);
 
 // End call and release resources
 await sdk.endCall();
 await sdk.dispose();
+```
+
+### Path 2: Push Notification (app opened from FCM)
+
+Use `acceptFromNotification()` when the user opens the app from a push notification — the FCM payload already contains `roomId` and `callerJid`:
+
+```dart
+// Called when user taps the FCM notification
+await sdk.acceptFromNotification(
+  username: '+255788811191',
+  roomId: fcmData['room'],      // from FCM payload
+  callerJid: fcmData['caller'], // from FCM payload
+  callerName: fcmData['caller_name'],
+  audio: true,
+  video: false,
+);
 ```
 
 ---
@@ -370,18 +388,20 @@ foldStateService.dispose();
 NexaconSDK({required String apiKey, required String secretKey, String? baseUrl})
 ```
 
-| Method                                                            | Description                                                   |
-| ----------------------------------------------------------------- | ------------------------------------------------------------- |
-| `initialize({required username, name})`                           | Connect to signaling without dialing — use for incoming calls |
-| `startCall({required to, required username, name, audio, video})` | Start outgoing call — handles everything internally           |
-| `acceptCall({audio, video})`                                      | Accept an incoming call                                       |
-| `rejectCall()`                                                    | Reject an incoming call                                       |
-| `endCall()`                                                       | End the current call                                          |
-| `toggleMute(bool muted)`                                          | Toggle microphone                                             |
-| `toggleSpeaker(bool enabled)`                                     | Toggle speaker                                                |
-| `toggleVideo(bool enabled)`                                       | Toggle video                                                  |
-| `switchCamera()`                                                  | Switch front/back camera                                      |
-| `dispose()`                                                       | Cleanup all resources                                         |
+| Method                                                                                           | Description                                                      |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `initialize({required username, name})`                                                          | Connect to signaling without dialing — use for incoming calls    |
+| `startCall({required to, required username, name, audio, video})`                                | Start outgoing call — handles everything internally              |
+| `acceptWhenReady({required username, name, audio, video, timeout})`                              | Initialize and auto-accept when XMPP signal arrives (foreground) |
+| `acceptFromNotification({required username, roomId, callerJid, callerName, name, audio, video})` | Accept using FCM/push payload data (background)                  |
+| `acceptCall({audio, video})`                                                                     | Accept an incoming call (must be in `incoming` state)            |
+| `rejectCall()`                                                                                   | Reject an incoming call                                          |
+| `endCall()`                                                                                      | End the current call                                             |
+| `toggleMute(bool muted)`                                                                         | Toggle microphone                                                |
+| `toggleSpeaker(bool enabled)`                                                                    | Toggle speaker                                                   |
+| `toggleVideo(bool enabled)`                                                                      | Toggle video                                                     |
+| `switchCamera()`                                                                                 | Switch front/back camera                                         |
+| `dispose()`                                                                                      | Cleanup all resources                                            |
 
 | Property       | Type       | Description           |
 | -------------- | ---------- | --------------------- |
