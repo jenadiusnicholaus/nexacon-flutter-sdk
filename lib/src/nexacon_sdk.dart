@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'core/client.dart';
 import 'calls/call_manager.dart';
 
@@ -118,7 +119,9 @@ class NexaconSDK {
     }
   }
 
-  /// Accept an incoming call
+  /// Accept an incoming call.
+  /// Must only be called after [onIncomingCall] has fired (state is `incoming`).
+  /// For a simpler flow use [acceptWhenReady] which waits automatically.
   ///
   /// [audio] Enable audio (default: true)
   /// [video] Enable video (default: false)
@@ -127,7 +130,7 @@ class NexaconSDK {
     bool video = false,
   }) async {
     if (_callManager == null) {
-      throw Exception('CallManager not initialized. Call startCall() first.');
+      throw Exception('CallManager not initialized. Call initialize() first.');
     }
 
     try {
@@ -138,6 +141,63 @@ class NexaconSDK {
     } catch (e) {
       onError?.call('Failed to accept call: $e');
       rethrow;
+    }
+  }
+
+  /// Initialize and automatically accept the incoming call once the
+  /// call invitation signal arrives from the caller.
+  ///
+  /// This is the correct way to handle incoming calls — it waits for the
+  /// XMPP `callInvitation` signal before calling [acceptCall], avoiding
+  /// the "No incoming call to accept" error.
+  ///
+  /// [username] Your username/phone number
+  /// [name] Your display name (optional)
+  /// [audio] Enable audio (default: true)
+  /// [video] Enable video (default: false)
+  /// [timeout] How long to wait for the call invitation (default: 30s)
+  Future<void> acceptWhenReady({
+    required String username,
+    String? name,
+    bool audio = true,
+    bool video = false,
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    final completer = Completer<void>();
+
+    // Save any existing onIncomingCall so we don't lose it
+    final existingOnIncomingCall = onIncomingCall;
+
+    // Override to intercept the incoming call signal
+    onIncomingCall = (callerName) {
+      existingOnIncomingCall?.call(callerName);
+      // Restore original callback
+      onIncomingCall = existingOnIncomingCall;
+      // Now accept
+      acceptCall(audio: audio, video: video).then((_) {
+        if (!completer.isCompleted) completer.complete();
+      }).catchError((e) {
+        if (!completer.isCompleted) completer.completeError(e);
+      });
+    };
+
+    final timer = Timer(timeout, () {
+      if (!completer.isCompleted) {
+        onIncomingCall = existingOnIncomingCall;
+        completer.completeError(
+          Exception('No incoming call received within ${timeout.inSeconds}s'),
+        );
+      }
+    });
+
+    try {
+      await initialize(username: username, name: name);
+      await completer.future;
+    } catch (e) {
+      onError?.call('Failed to accept incoming call: $e');
+      rethrow;
+    } finally {
+      timer.cancel();
     }
   }
 
