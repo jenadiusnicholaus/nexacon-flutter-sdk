@@ -57,7 +57,6 @@ class _CallExamplePageState extends State<CallExamplePage> {
       _client = NexaconClient(
         apiKey: _apiKeyController.text,
         secretKey: _secretKeyController.text,
-        baseUrl: 'https://nxservice.quantumvision-tech.com/api/v1.0',
       );
 
       final nxResponse = await _client!.auth.generateXMPPToken(
@@ -67,6 +66,9 @@ class _CallExamplePageState extends State<CallExamplePage> {
       final nxtoken = nxResponse['token'];
       final nxid = nxResponse['jid'];
       final wsUrl = nxResponse['nxws'];
+
+      // Set the token on the client for API authentication
+      _client!.setToken(nxtoken);
 
       _callManager = await _client!.createCallManager(
         nxtoken: nxtoken,
