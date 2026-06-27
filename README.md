@@ -14,7 +14,8 @@ A comprehensive Flutter SDK for Nexacon API — providing plug-and-play P2P audi
 - [Installation](#installation)
 - [Platform Requirements](#platform-requirements)
 - [Platform Configuration](#platform-configuration)
-- [Quick Start](#quick-start)
+- [Quick Start — Outgoing Call](#quick-start--outgoing-call)
+- [Quick Start — Incoming Call](#quick-start--incoming-call)
 - [Advanced Usage](#advanced-usage)
 - [Real-Time Messaging](#real-time-messaging)
 - [Foldable Device Support](#foldable-device-support)
@@ -26,9 +27,10 @@ A comprehensive Flutter SDK for Nexacon API — providing plug-and-play P2P audi
 
 ## Features
 
-- **Simplified API**: Make calls in 3 steps with `NexaconSDK`
+- **Simplified API**: Make or receive calls in 3 steps with `NexaconSDK`
 - **P2P Calling**: Full WebRTC peer-to-peer audio/video calling with automatic signaling
 - **NX Token Management**: Automatic token generation, validation, and client authentication
+- **Incoming Call Support**: `initialize()` + `acceptCall()` for clean incoming call handling
 - **Real-Time Messaging**: Instant messaging with typing indicators and read receipts
 - **Presence Management**: Online/offline status tracking
 - **Call Controls**: Mute, speaker toggle, video toggle, camera switch, duration tracking
@@ -46,7 +48,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  nexacon_sdk: ^1.1.8
+  nexacon_sdk: ^1.2.0
 ```
 
 Install:
@@ -138,48 +140,72 @@ No additional configuration required.
 
 ---
 
-## Quick Start
+## Quick Start — Outgoing Call
 
-Use the simplified `NexaconSDK` class — just 3 steps:
+Use `NexaconSDK` for the simplest possible integration:
 
 ```dart
 import 'package:nexacon_sdk/nexacon_sdk.dart';
 
-// Step 1: Create SDK instance
 final sdk = NexaconSDK(
   apiKey: 'your_api_key',
   secretKey: 'your_secret_key',
 );
 
-// Step 2: Set up callbacks (optional but recommended)
-sdk.onCallStateChanged = (state) {
-  print('📱 Call state: $state');
-};
-sdk.onIncomingCall = (callerName) {
-  print('📞 Incoming call from: $callerName');
-};
-sdk.onCallEnded = (reason) {
-  print('📞 Call ended: $reason');
-};
-sdk.onError = (error) {
-  print('❌ Error: $error');
-};
+// Set up callbacks
+sdk.onCallStateChanged = (state) => print('📱 State: $state');
+sdk.onCallEnded       = (reason) => print('📞 Ended: $reason');
+sdk.onError           = (error)  => print('❌ Error: $error');
 
-// Step 3: Start a call
+// Start an outgoing call — handles token, connection & signaling automatically
 await sdk.startCall(
-  to: '+255788811192',      // recipient
+  to: '+255788811192',       // recipient
   username: '+255788811191', // your username
   audio: true,
   video: false,
 );
 
-// Control the call
-sdk.toggleMute(true);     // mute
-sdk.toggleSpeaker(true);  // speaker on
+// In-call controls
+sdk.toggleMute(true);     // mute microphone
+sdk.toggleSpeaker(true);  // enable speaker
 sdk.toggleVideo(true);    // enable video
-await sdk.switchCamera(); // switch camera
+await sdk.switchCamera(); // switch front/back camera
 
-// End call and cleanup
+// End call and release resources
+await sdk.endCall();
+await sdk.dispose();
+```
+
+---
+
+## Quick Start — Incoming Call
+
+For incoming calls, use `initialize()` to connect, then `acceptCall()` to answer:
+
+```dart
+import 'package:nexacon_sdk/nexacon_sdk.dart';
+
+final sdk = NexaconSDK(
+  apiKey: 'your_api_key',
+  secretKey: 'your_secret_key',
+);
+
+// Set up callbacks
+sdk.onCallStateChanged = (state) => print('📱 State: $state');
+sdk.onIncomingCall     = (name)  => print('📞 Incoming from: $name');
+sdk.onCallEnded        = (reason)=> print('📞 Ended: $reason');
+sdk.onError            = (error) => print('❌ Error: $error');
+
+// Step 1: Initialize (get token, connect to signaling server)
+await sdk.initialize(username: '+255788811191');
+
+// Step 2: Accept the incoming call
+await sdk.acceptCall(audio: true, video: false);
+
+// Or reject it
+// sdk.rejectCall();
+
+// End call and release resources
 await sdk.endCall();
 await sdk.dispose();
 ```
@@ -188,7 +214,7 @@ await sdk.dispose();
 
 ## Advanced Usage
 
-For full control, use `NexaconClient` directly.
+For full low-level control, use `NexaconClient` directly.
 
 ### Step 1: Initialize Client
 
@@ -205,15 +231,13 @@ final client = NexaconClient(
 ### Step 2: Generate NX Token
 
 ```dart
-final nxResponse = await client.auth.getNxToken(
-  username: '+255788811191',
-);
+final nxResponse = await client.auth.getNxToken(username: '+255788811191');
 
 final nxtoken = nxResponse['token'];
-final nxid = nxResponse['jid'];
-final wsUrl = nxResponse['nxws'];
+final nxid    = nxResponse['jid'];
+final wsUrl   = nxResponse['nxws'];
 
-// IMPORTANT: Set the token on the client to avoid 403 errors
+// IMPORTANT: Required to avoid 403 errors on subsequent API calls
 client.setToken(nxtoken);
 ```
 
@@ -226,19 +250,11 @@ final callManager = await client.createCallManager(
   wsUrl: wsUrl,
   name: 'Your Display Name',
   onCallStateChanged: (state) {
-    if (state == CallState.connected) {
-      print('✅ Call connected');
-    }
+    if (state == CallState.connected) print('✅ Connected');
   },
-  onIncomingCall: (callerName) {
-    print('📞 Incoming from: $callerName');
-  },
-  onCallEnded: (reason) {
-    print('📞 Ended: $reason');
-  },
-  onError: (error) {
-    print('❌ Error: $error');
-  },
+  onIncomingCall: (callerName) => print('📞 Incoming: $callerName'),
+  onCallEnded:    (reason)     => print('📞 Ended: $reason'),
+  onError:        (error)      => print('❌ $error'),
 );
 ```
 
@@ -246,11 +262,7 @@ final callManager = await client.createCallManager(
 
 ```dart
 // Outgoing call
-await callManager.initiateCall(
-  to: '+255788811192',
-  audio: true,
-  video: false,
-);
+await callManager.initiateCall(to: '+255788811192', audio: true, video: false);
 
 // Accept incoming call
 await callManager.acceptCall(audio: true, video: false);
@@ -265,21 +277,13 @@ await callManager.endCall();
 ### Step 5: In-Call Controls
 
 ```dart
-// Microphone
-callManager.webrtcService?.toggleAudio(false); // mute
-callManager.webrtcService?.toggleAudio(true);  // unmute
-
-// Video
-callManager.webrtcService?.toggleVideo(false); // disable
-callManager.webrtcService?.toggleVideo(true);  // enable
-
-// Camera
+callManager.webrtcService?.toggleAudio(false);  // mute
+callManager.webrtcService?.toggleAudio(true);   // unmute
+callManager.webrtcService?.toggleVideo(false);  // disable video
+callManager.webrtcService?.toggleVideo(true);   // enable video
+callManager.webrtcService?.toggleSpeaker(true); // speaker on
 await callManager.webrtcService?.switchCamera();
 
-// Speaker
-callManager.webrtcService?.toggleSpeaker(true);
-
-// Duration
 final duration = callManager.callDuration;
 print('Duration: ${duration.inSeconds}s');
 ```
@@ -304,10 +308,7 @@ messagingManager.messageStream.listen((message) {
 });
 
 // Send a message
-messagingManager.sendMessage(
-  to: 'recipient@example.com',
-  message: 'Hello!',
-);
+messagingManager.sendMessage(to: 'recipient@example.com', message: 'Hello!');
 
 // Typing indicator
 messagingManager.sendTypingIndicator('recipient@example.com', isTyping: true);
@@ -321,7 +322,6 @@ messagingManager.presenceStream.listen((presence) {
   print('User is ${isOnline ? 'online' : 'offline'}');
 });
 
-// Cleanup
 messagingManager.dispose();
 ```
 
@@ -334,14 +334,10 @@ final foldStateService = FoldStateService();
 
 foldStateService.foldStateStream.listen((state) {
   switch (state) {
-    case FoldState.flat:
-      print('Device is flat');
-    case FoldState.folded:
-      print('Device is folded');
-    case FoldState.halfOpen:
-      print('Device is half open');
-    case FoldState.unknown:
-      print('Fold state unknown');
+    case FoldState.flat:     print('Device is flat');
+    case FoldState.folded:   print('Device is folded');
+    case FoldState.halfOpen: print('Device is half open');
+    case FoldState.unknown:  print('Fold state unknown');
   }
 });
 
@@ -374,17 +370,18 @@ foldStateService.dispose();
 NexaconSDK({required String apiKey, required String secretKey, String? baseUrl})
 ```
 
-| Method                                                            | Description                                  |
-| ----------------------------------------------------------------- | -------------------------------------------- |
-| `startCall({required to, required username, name, audio, video})` | Start a call — handles everything internally |
-| `acceptCall({audio, video})`                                      | Accept an incoming call                      |
-| `rejectCall()`                                                    | Reject an incoming call                      |
-| `endCall()`                                                       | End the current call                         |
-| `toggleMute(bool muted)`                                          | Toggle microphone                            |
-| `toggleSpeaker(bool enabled)`                                     | Toggle speaker                               |
-| `toggleVideo(bool enabled)`                                       | Toggle video                                 |
-| `switchCamera()`                                                  | Switch front/back camera                     |
-| `dispose()`                                                       | Cleanup resources                            |
+| Method                                                            | Description                                                   |
+| ----------------------------------------------------------------- | ------------------------------------------------------------- |
+| `initialize({required username, name})`                           | Connect to signaling without dialing — use for incoming calls |
+| `startCall({required to, required username, name, audio, video})` | Start outgoing call — handles everything internally           |
+| `acceptCall({audio, video})`                                      | Accept an incoming call                                       |
+| `rejectCall()`                                                    | Reject an incoming call                                       |
+| `endCall()`                                                       | End the current call                                          |
+| `toggleMute(bool muted)`                                          | Toggle microphone                                             |
+| `toggleSpeaker(bool enabled)`                                     | Toggle speaker                                                |
+| `toggleVideo(bool enabled)`                                       | Toggle video                                                  |
+| `switchCamera()`                                                  | Switch front/back camera                                      |
+| `dispose()`                                                       | Cleanup all resources                                         |
 
 | Property       | Type       | Description           |
 | -------------- | ---------- | --------------------- |
@@ -463,18 +460,18 @@ client.setToken(nxtoken); // Must be called after getNxToken()
 
 **Cause**: WebSocket URL uses `https://` instead of `wss://`.
 
-**Fix**: The SDK converts this automatically. Verify the `nxws` field from `getNxToken()` is reachable.
+**Fix**: `NexaconSDK` converts this automatically. If using `NexaconClient` directly, ensure `wsUrl` starts with `wss://`.
 
-### Camera/Microphone Not Working
+### Camera / Microphone Not Working
 
-- **Android**: Add permissions to `AndroidManifest.xml`
-- **iOS**: Add keys to `Info.plist`
-- **Web**: App must be served over HTTPS
+- **Android**: Ensure permissions are in `AndroidManifest.xml` and granted at runtime
+- **iOS**: Ensure keys are in `Info.plist`
+- **Web**: App must be served over HTTPS (WebRTC requirement)
 
 ### Call Stuck in "Calling"
 
-- Ensure the callee is online and has the SDK initialized
-- Call times out after **60 seconds** if not accepted
+- Ensure the callee is online with the SDK initialized
+- Calls time out after **60 seconds** if not accepted
 
 ### Console Log Reference
 
