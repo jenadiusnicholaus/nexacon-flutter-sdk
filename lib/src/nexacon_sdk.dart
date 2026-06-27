@@ -32,43 +32,34 @@ class NexaconSDK {
         _secretKey = secretKey,
         _baseUrl = baseUrl;
 
-  /// Start an outgoing call - handles all complexity internally
+  /// Initialize SDK connection without starting a call.
+  /// Use this for incoming calls: call [initialize] then [acceptCall].
+  /// For outgoing calls, use [startCall] directly.
   ///
-  /// [to] The recipient's username/phone number
   /// [username] Your username/phone number
   /// [name] Your display name (optional)
-  /// [audio] Enable audio (default: true)
-  /// [video] Enable video (default: false)
-  Future<void> startCall({
-    required String to,
+  Future<void> initialize({
     required String username,
     String? name,
-    bool audio = true,
-    bool video = false,
   }) async {
     try {
-      // Step 1: Initialize client
       _client = NexaconClient(
         apiKey: _apiKey,
         secretKey: _secretKey,
         baseUrl: _baseUrl,
       );
 
-      // Step 2: Get NX token and set it automatically
       final nxResponse = await _client!.auth.getNxToken(username: username);
       final nxtoken = nxResponse['token'];
       final nxid = nxResponse['jid'];
       String wsUrl = nxResponse['nxws'];
 
-      // Convert https:// to wss:// for WebSocket
       if (wsUrl.startsWith('https://')) {
         wsUrl = wsUrl.replaceFirst('https://', 'wss://');
       }
 
-      // Step 3: Set token on client (critical for API authentication)
       _client!.setToken(nxtoken);
 
-      // Step 4: Create CallManager
       _callManager = await _client!.createCallManager(
         nxtoken: nxtoken,
         nxid: nxid,
@@ -93,8 +84,29 @@ class NexaconSDK {
           onRemoteStream?.call();
         },
       );
+    } catch (e) {
+      onError?.call('Failed to initialize: $e');
+      rethrow;
+    }
+  }
 
-      // Step 5: Initiate call
+  /// Start an outgoing call - handles all complexity internally.
+  ///
+  /// [to] The recipient's username/phone number
+  /// [username] Your username/phone number
+  /// [name] Your display name (optional)
+  /// [audio] Enable audio (default: true)
+  /// [video] Enable video (default: false)
+  Future<void> startCall({
+    required String to,
+    required String username,
+    String? name,
+    bool audio = true,
+    bool video = false,
+  }) async {
+    try {
+      await initialize(username: username, name: name);
+
       await _callManager!.initiateCall(
         to: to,
         audio: audio,
