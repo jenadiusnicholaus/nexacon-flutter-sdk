@@ -1,5 +1,6 @@
 library nexacon_sdk;
 
+export 'src/nexacon_sdk.dart';
 export 'src/core/exceptions.dart';
 export 'src/core/client.dart';
 export 'src/auth/auth.dart';

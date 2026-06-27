@@ -44,6 +44,32 @@ flutter pub get
 
 ## Quick Start Guide
 
+### Super Simple (3 Steps)
+
+For most use cases, use the simplified `NexaconSDK` class:
+
+```dart
+import 'package:nexacon_sdk/nexacon_sdk.dart';
+
+// Step 1: Create SDK instance
+final sdk = NexaconSDK(
+  apiKey: 'your_api_key',
+  secretKey: 'your_secret_key',
+);
+
+// Step 2: Start a call (handles everything internally)
+await sdk.startCall(
+  to: '+255788811192',
+  username: '+255788811191',
+);
+
+// Step 3: End call when done
+await sdk.endCall();
+await sdk.dispose();
+```
+
+### Advanced Usage (Full Control)
+
 ### Step 1: Initialize the Client
 
 ```dart
@@ -351,7 +377,44 @@ No additional configuration required. The SDK works out of the box on Windows.
 
 ## API Reference
 
-### NexaconClient
+### NexaconSDK (Simplified API)
+
+The simplified high-level API for quick integration.
+
+```dart
+final sdk = NexaconSDK(
+  apiKey: String,
+  secretKey: String,
+  baseUrl: String, // optional
+);
+```
+
+#### Methods
+
+- `startCall({required String to, required String username, String? name, bool audio, bool video})` - Start a call (handles all complexity internally)
+- `acceptCall({bool audio, bool video})` - Accept an incoming call
+- `rejectCall()` - Reject an incoming call
+- `endCall()` - End the current call
+- `toggleMute(bool muted)` - Toggle microphone
+- `toggleSpeaker(bool enabled)` - Toggle speaker
+- `toggleVideo(bool enabled)` - Toggle video
+- `switchCamera()` - Switch between front/back camera
+- `dispose()` - Cleanup resources
+
+#### Properties
+
+- `callDuration` - Current call duration
+
+#### Callbacks
+
+- `onCallStateChanged` - Called when call state changes
+- `onIncomingCall` - Called when receiving an incoming call
+- `onCallEnded` - Called when call ends
+- `onError` - Called when an error occurs
+- `onLocalStream` - Called when local stream is received
+- `onRemoteStream` - Called when remote stream is received
+
+### NexaconClient (Advanced API)
 
 Main client for API interactions.
 
