@@ -514,10 +514,7 @@ class CallManager {
       status: status,
       durationSeconds: duration,
       metadata: {'reason': reason},
-    ).catchError((e) {
-      print('Failed to record call analytics: $e');
-      return <String, dynamic>{};
-    });
+    ).catchError((_) => <String, dynamic>{});
   }
 
   /// Set call state and notify listeners
