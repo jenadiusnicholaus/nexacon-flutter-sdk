@@ -67,7 +67,7 @@ For peer-to-peer audio/video calls, use CallManager:
 .. code-block:: dart
 
     // Generate NX token
-    final nxResponse = await client.auth.generateXMPPToken(
+    final nxResponse = await client.auth.getNxToken(
       username: '+255788811191',
     );
 

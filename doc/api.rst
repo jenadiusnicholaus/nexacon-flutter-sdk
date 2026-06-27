@@ -165,14 +165,14 @@ NX token management for signaling.
 Methods
 ~~~~~~~
 
-generateXMPPToken
-^^^^^^^^^^^^^^^^^
+getNxToken
+^^^^^^^^^^^
 
-Generates an NX token for signaling.
+Gets an NX token for signaling.
 
 .. code-block:: dart
 
-    Future<Map<String, dynamic>> generateXMPPToken({
+    Future<Map<String, dynamic>> getNxToken({
       required String username,
       String host = 'nxservice.quantumvision-tech.com',
     })

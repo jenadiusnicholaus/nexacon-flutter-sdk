@@ -11,7 +11,7 @@ void main() async {
   try {
     // Generate NX token for signaling
     print('Generating NX token...');
-    final nxResponse = await client.auth.generateXMPPToken(
+    final nxResponse = await client.auth.getNxToken(
       username: '+255788811191',
     );
     print('NX token generated');

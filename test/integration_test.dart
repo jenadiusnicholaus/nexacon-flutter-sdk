@@ -11,7 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Integration Tests - Auth Flow', () {
-    test('generateXMPPToken success flow', () async {
+    test('getNxToken success flow', () async {
       // Expected flow:
       // 1. Client makes POST request to /nexacon-auth/nxm-token/
       // 2. Request body: {username: '+255788811191', host: 'nxservice.quantumvision-tech.com'}
@@ -20,7 +20,7 @@ void main() {
 
       // Manual test:
       // final client = NexaconClient(apiKey: '...', secretKey: '...');
-      // final response = await client.auth.generateXMPPToken(username: '+255788811191');
+      // final response = await client.auth.getNxToken(username: '+255788811191');
       // expect(response.containsKey('token'), true);
       // expect(response.containsKey('jid'), true);
       // expect(response.containsKey('nxws'), true);
@@ -28,7 +28,7 @@ void main() {
       expect(true, isTrue); // Documentation placeholder
     });
 
-    test('generateXMPPToken handles server error', () async {
+    test('getNxToken handles server error', () async {
       // Expected flow:
       // 1. Server returns 4xx or 5xx error
       // 2. SDK throws APIException with error message

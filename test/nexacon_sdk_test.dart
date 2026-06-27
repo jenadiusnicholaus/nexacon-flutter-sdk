@@ -80,10 +80,9 @@ void main() {
       client.close();
     });
 
-    test('generateXMPPToken throws ValidationException for empty username',
-        () async {
+    test('getNxToken throws ValidationException for empty username', () async {
       expect(
-        () => client.auth.generateXMPPToken(username: ''),
+        () => client.auth.getNxToken(username: ''),
         throwsA(isA<ValidationException>()),
       );
     });

@@ -38,7 +38,7 @@ final client = NexaconClient(
 ### 2. Generate NX Token
 
 ```dart
-final nxResponse = await client.auth.generateXMPPToken(
+final nxResponse = await client.auth.getNxToken(
   username: '+255788811191',
 );
 final nxtoken = nxResponse['token'];
@@ -337,7 +337,7 @@ final callManager = await client.createCallManager(
 NX token management.
 
 ```dart
-final response = await client.auth.generateXMPPToken(
+final response = await client.auth.getNxToken(
   username: String,
 );
 ```

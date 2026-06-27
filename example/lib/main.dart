@@ -59,7 +59,7 @@ class _CallExamplePageState extends State<CallExamplePage> {
         secretKey: _secretKeyController.text,
       );
 
-      final nxResponse = await _client!.auth.generateXMPPToken(
+      final nxResponse = await _client!.auth.getNxToken(
         username: _usernameController.text,
       );
 
