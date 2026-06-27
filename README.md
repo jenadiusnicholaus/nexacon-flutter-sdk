@@ -1,35 +1,61 @@
 # Nexacon Flutter SDK
 
-A comprehensive Flutter SDK for Nexacon API, providing plug-and-play P2P calling with WebRTC and NX signaling, plus real-time messaging with presence and read receipts.
+[![pub.dev](https://img.shields.io/pub/v/nexacon_sdk.svg)](https://pub.dev/packages/nexacon_sdk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Platform](https://img.shields.io/badge/platform-android%20%7C%20ios%20%7C%20web%20%7C%20linux%20%7C%20macos%20%7C%20windows-blue)](https://pub.dev/packages/nexacon_sdk)
 
-## Overview
+A comprehensive Flutter SDK for Nexacon API — providing plug-and-play P2P audio/video calling with WebRTC and NX signaling, plus real-time messaging with presence and read receipts.
 
-Nexacon Flutter SDK enables developers to integrate peer-to-peer audio and video calling and real-time messaging into their Flutter applications with minimal setup. The SDK handles all complex signaling, WebRTC peer connections, ICE negotiation, XMPP messaging, and presence management internally.
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Platform Requirements](#platform-requirements)
+- [Platform Configuration](#platform-configuration)
+- [Quick Start](#quick-start)
+- [Advanced Usage](#advanced-usage)
+- [Real-Time Messaging](#real-time-messaging)
+- [Foldable Device Support](#foldable-device-support)
+- [Call States](#call-states)
+- [API Reference](#api-reference)
+- [Troubleshooting](#troubleshooting)
+
+---
 
 ## Features
 
+- **Simplified API**: Make calls in 3 steps with `NexaconSDK`
 - **P2P Calling**: Full WebRTC peer-to-peer audio/video calling with automatic signaling
-- **Real-Time Messaging**: Instant messaging with presence, typing indicators, and read receipts
+- **NX Token Management**: Automatic token generation, validation, and client authentication
+- **Real-Time Messaging**: Instant messaging with typing indicators and read receipts
+- **Presence Management**: Online/offline status tracking
+- **Call Controls**: Mute, speaker toggle, video toggle, camera switch, duration tracking
 - **Automatic Reconnection**: Built-in connection management with exponential backoff
-- **Cross-Platform**: Works on Android, iOS, Linux, macOS, Web, and Windows
+- **ICE Management**: Automatic ICE candidate buffering and exchange
 - **Foldable Device Support**: Detect fold state changes on Android devices
-- **Call Controls**: Mute, speaker toggle, camera switch, duration tracking
-- **Professional Error Handling**: Detailed console logging and validation
+- **Cross-Platform**: Android, iOS, Web, Linux, macOS, Windows
+- **Professional Logging**: Emoji-based console logging for easy debugging
+
+---
 
 ## Installation
 
-Add the package to your `pubspec.yaml`:
+Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  nexacon_sdk: ^1.1.6
+  nexacon_sdk: ^1.1.8
 ```
 
-Install the dependency:
+Install:
 
 ```bash
 flutter pub get
 ```
+
+---
 
 ## Platform Requirements
 
@@ -42,244 +68,13 @@ flutter pub get
 | Web      | Modern browsers      | Requires WebRTC support            |
 | Windows  | Any                  | Works out of the box               |
 
-## Quick Start Guide
-
-### Super Simple (3 Steps)
-
-For most use cases, use the simplified `NexaconSDK` class:
-
-```dart
-import 'package:nexacon_sdk/nexacon_sdk.dart';
-
-// Step 1: Create SDK instance
-final sdk = NexaconSDK(
-  apiKey: 'your_api_key',
-  secretKey: 'your_secret_key',
-);
-
-// Step 2: Start a call (handles everything internally)
-await sdk.startCall(
-  to: '+255788811192',
-  username: '+255788811191',
-);
-
-// Step 3: End call when done
-await sdk.endCall();
-await sdk.dispose();
-```
-
-### Advanced Usage (Full Control)
-
-### Step 1: Initialize the Client
-
-```dart
-import 'package:nexacon_sdk/nexacon_sdk.dart';
-
-// Create a NexaconClient instance
-final client = NexaconClient(
-  apiKey: 'your_api_key',
-  secretKey: 'your_secret_key',
-  // baseUrl is optional - defaults to https://nxservice.quantumvision-tech.com/api/v1.0
-);
-```
-
-### Step 2: Generate NX Token
-
-The NX token is required for XMPP signaling and API authentication.
-
-```dart
-try {
-  final nxResponse = await client.auth.getNxToken(
-    username: '+255788811191',
-  );
-
-  final nxtoken = nxResponse['token'];
-  final nxid = nxResponse['jid'];
-  final wsUrl = nxResponse['nxws'];
-
-  // IMPORTANT: Set the token on the client for API authentication
-  client.setToken(nxtoken);
-
-  print('✅ NX token retrieved successfully');
-} catch (e) {
-  print('❌ Failed to get NX token: $e');
-}
-```
-
-### Step 3: Create CallManager
-
-```dart
-final callManager = await client.createCallManager(
-  nxtoken: nxtoken,
-  nxid: nxid,
-  wsUrl: wsUrl,
-  name: 'Your Display Name',
-  onCallStateChanged: (state) {
-    print('Call state: $state');
-    // Update UI based on state
-  },
-  onIncomingCall: (callerName) {
-    print('Incoming call from: $callerName');
-    // Show incoming call UI
-  },
-  onCallEnded: (reason) {
-    print('Call ended: $reason');
-    // Handle call end
-  },
-  onError: (error) {
-    print('Call error: $error');
-    // Show error to user
-  },
-);
-```
-
-### Step 4: Make a Call
-
-```dart
-// Initiate an outgoing call
-try {
-  await callManager.initiateCall(
-    to: '+255788811192',
-    audio: true,
-    video: false,
-  );
-  print('✅ Call initiated');
-} catch (e) {
-  print('❌ Failed to initiate call: $e');
-}
-
-// Accept an incoming call
-try {
-  await callManager.acceptCall(
-    audio: true,
-    video: false,
-  );
-  print('✅ Call accepted');
-} catch (e) {
-  print('❌ Failed to accept call: $e');
-}
-
-// End the current call
-await callManager.endCall();
-```
-
-### Step 5: Call Controls
-
-```dart
-// Toggle microphone (mute/unmute)
-callManager.webrtcService?.toggleAudio(false); // mute
-callManager.webrtcService?.toggleAudio(true);  // unmute
-
-// Toggle camera (enable/disable)
-callManager.webrtcService?.toggleVideo(false); // disable video
-callManager.webrtcService?.toggleVideo(true);  // enable video
-
-// Switch between front and back camera
-await callManager.webrtcService?.switchCamera();
-
-// Get call duration
-final duration = callManager.callDuration;
-print('Call duration: ${duration.inSeconds} seconds');
-```
-
-### Step 6: Cleanup
-
-```dart
-// Always dispose resources when done
-callManager.dispose();
-client.close();
-```
-
-### 7. Real-Time Messaging
-
-```dart
-// Create messaging manager
-final messagingManager = client.createMessagingManager();
-
-// Listen for messages
-messagingManager.messageStream.listen((message) {
-  print('Message: ${message['message']}');
-});
-
-// Send a message
-messagingManager.sendMessage(
-  to: 'recipient@example.com',
-  message: 'Hello!',
-);
-
-// Send typing indicator
-messagingManager.sendTypingIndicator('recipient@example.com', isTyping: true);
-
-// Send read receipt
-messagingManager.sendReadReceipt('recipient@example.com', 'msg_123');
-
-// Listen for presence changes
-messagingManager.presenceStream.listen((presence) {
-  final isOnline = presence['type'] == null || presence['type'] == 'available';
-  print('User is ${isOnline ? 'online' : 'offline'}');
-});
-
-// Cleanup
-messagingManager.dispose();
-```
-
-### 8. Foldable Device Support
-
-The SDK provides a `FoldStateService` for detecting foldable device state changes on Android.
-
-```dart
-import 'package:nexacon_sdk/nexacon_sdk.dart';
-
-// Create fold state service
-final foldStateService = FoldStateService();
-
-// Listen for fold state changes
-foldStateService.foldStateStream.listen((state) {
-  switch (state) {
-    case FoldState.flat:
-      print('Device is flat');
-      break;
-    case FoldState.folded:
-      print('Device is folded');
-      break;
-    case FoldState.halfOpen:
-      print('Device is half open');
-      break;
-    case FoldState.unknown:
-      print('Fold state unknown');
-      break;
-  }
-});
-
-// Check current state
-if (foldStateService.isFolded) {
-  // Adjust UI for folded state
-}
-
-// Cleanup
-foldStateService.dispose();
-```
-
-**Android Native Implementation**
-
-To enable actual fold detection on Android, you need to implement the native platform code. The SDK provides a reference implementation in `android/src/main/kotlin/com/nexacon/nexacon_sdk/FoldStatePlugin.kt`.
-
-For production use, use Android's DeviceStateManager API:
-
-```kotlin
-val deviceStateManager = context.getSystemService(DeviceStateManager::class.java)
-deviceStateManager.registerCallback(mainExecutor, object : DeviceStateCallback() {
-    override fun onDeviceStateChanged(state: DeviceState) {
-        // Handle fold state changes
-    }
-})
-```
+---
 
 ## Platform Configuration
 
 ### Android
 
-Add permissions to `android/app/src/main/AndroidManifest.xml`:
+Add to `android/app/src/main/AndroidManifest.xml`:
 
 ```xml
 <uses-permission android:name="android.permission.INTERNET"/>
@@ -292,7 +87,7 @@ Add permissions to `android/app/src/main/AndroidManifest.xml`:
 <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
 ```
 
-Set minimum SDK version in `android/app/build.gradle`:
+Set minimum SDK in `android/app/build.gradle`:
 
 ```gradle
 android {
@@ -304,7 +99,7 @@ android {
 
 ### iOS
 
-Add permissions to `ios/Runner/Info.plist`:
+Add to `ios/Runner/Info.plist`:
 
 ```xml
 <key>NSCameraUsageDescription</key>
@@ -324,13 +119,9 @@ Set minimum iOS version in `ios/Podfile`:
 platform :ios, '12.0'
 ```
 
-### Linux
-
-No additional configuration required. The SDK works out of the box on Linux.
-
 ### macOS
 
-Add permissions to `macos/Runner/DebugProfile.entitlements` and `Release.entitlements`:
+Add to `macos/Runner/DebugProfile.entitlements` and `Release.entitlements`:
 
 ```xml
 <key>com.apple.security.device.camera</key>
@@ -341,29 +132,227 @@ Add permissions to `macos/Runner/DebugProfile.entitlements` and `Release.entitle
 <true/>
 ```
 
-### Web
+### Web, Linux, Windows
 
-No additional configuration required. The SDK works in modern browsers with WebRTC support.
+No additional configuration required.
 
-### Windows
+---
 
-No additional configuration required. The SDK works out of the box on Windows.
+## Quick Start
 
-## Features
+Use the simplified `NexaconSDK` class — just 3 steps:
 
-- **NX Token Management**: Generate and refresh NX tokens for signaling
-- **P2P Calling**: Full WebRTC peer-to-peer calling with automatic signaling
-- **Real-Time Messaging**: Instant messaging with presence
-- **Typing Indicators**: Real-time typing status
-- **Read Receipts**: Message delivery and read confirmations
-- **Presence Management**: Online/offline status tracking
-- **Message History**: Fetch message history with filters and pagination
-- **Automatic Reconnection**: Built-in connection with exponential backoff
-- **ICE Management**: Automatic ICE candidate buffering and exchange
-- **Call Controls**: Mute, speaker toggle, camera switch
-- **Duration Tracking**: Built-in call duration timer
-- **Foldable Device Support**: Detect fold state changes on Android
-- **Cross-platform**: Works on Android, iOS, Linux, macOS, Web, Windows
+```dart
+import 'package:nexacon_sdk/nexacon_sdk.dart';
+
+// Step 1: Create SDK instance
+final sdk = NexaconSDK(
+  apiKey: 'your_api_key',
+  secretKey: 'your_secret_key',
+);
+
+// Step 2: Set up callbacks (optional but recommended)
+sdk.onCallStateChanged = (state) {
+  print('📱 Call state: $state');
+};
+sdk.onIncomingCall = (callerName) {
+  print('📞 Incoming call from: $callerName');
+};
+sdk.onCallEnded = (reason) {
+  print('📞 Call ended: $reason');
+};
+sdk.onError = (error) {
+  print('❌ Error: $error');
+};
+
+// Step 3: Start a call
+await sdk.startCall(
+  to: '+255788811192',      // recipient
+  username: '+255788811191', // your username
+  audio: true,
+  video: false,
+);
+
+// Control the call
+sdk.toggleMute(true);     // mute
+sdk.toggleSpeaker(true);  // speaker on
+sdk.toggleVideo(true);    // enable video
+await sdk.switchCamera(); // switch camera
+
+// End call and cleanup
+await sdk.endCall();
+await sdk.dispose();
+```
+
+---
+
+## Advanced Usage
+
+For full control, use `NexaconClient` directly.
+
+### Step 1: Initialize Client
+
+```dart
+import 'package:nexacon_sdk/nexacon_sdk.dart';
+
+final client = NexaconClient(
+  apiKey: 'your_api_key',
+  secretKey: 'your_secret_key',
+  // baseUrl is optional — defaults to https://nxservice.quantumvision-tech.com/api/v1.0
+);
+```
+
+### Step 2: Generate NX Token
+
+```dart
+final nxResponse = await client.auth.getNxToken(
+  username: '+255788811191',
+);
+
+final nxtoken = nxResponse['token'];
+final nxid = nxResponse['jid'];
+final wsUrl = nxResponse['nxws'];
+
+// IMPORTANT: Set the token on the client to avoid 403 errors
+client.setToken(nxtoken);
+```
+
+### Step 3: Create CallManager
+
+```dart
+final callManager = await client.createCallManager(
+  nxtoken: nxtoken,
+  nxid: nxid,
+  wsUrl: wsUrl,
+  name: 'Your Display Name',
+  onCallStateChanged: (state) {
+    if (state == CallState.connected) {
+      print('✅ Call connected');
+    }
+  },
+  onIncomingCall: (callerName) {
+    print('📞 Incoming from: $callerName');
+  },
+  onCallEnded: (reason) {
+    print('📞 Ended: $reason');
+  },
+  onError: (error) {
+    print('❌ Error: $error');
+  },
+);
+```
+
+### Step 4: Make or Accept a Call
+
+```dart
+// Outgoing call
+await callManager.initiateCall(
+  to: '+255788811192',
+  audio: true,
+  video: false,
+);
+
+// Accept incoming call
+await callManager.acceptCall(audio: true, video: false);
+
+// Reject incoming call
+callManager.rejectCall();
+
+// End current call
+await callManager.endCall();
+```
+
+### Step 5: In-Call Controls
+
+```dart
+// Microphone
+callManager.webrtcService?.toggleAudio(false); // mute
+callManager.webrtcService?.toggleAudio(true);  // unmute
+
+// Video
+callManager.webrtcService?.toggleVideo(false); // disable
+callManager.webrtcService?.toggleVideo(true);  // enable
+
+// Camera
+await callManager.webrtcService?.switchCamera();
+
+// Speaker
+callManager.webrtcService?.toggleSpeaker(true);
+
+// Duration
+final duration = callManager.callDuration;
+print('Duration: ${duration.inSeconds}s');
+```
+
+### Step 6: Cleanup
+
+```dart
+callManager.dispose();
+client.close();
+```
+
+---
+
+## Real-Time Messaging
+
+```dart
+final messagingManager = client.createMessagingManager();
+
+// Receive messages
+messagingManager.messageStream.listen((message) {
+  print('💬 ${message['from']}: ${message['message']}');
+});
+
+// Send a message
+messagingManager.sendMessage(
+  to: 'recipient@example.com',
+  message: 'Hello!',
+);
+
+// Typing indicator
+messagingManager.sendTypingIndicator('recipient@example.com', isTyping: true);
+
+// Read receipt
+messagingManager.sendReadReceipt('recipient@example.com', 'msg_123');
+
+// Presence (online/offline)
+messagingManager.presenceStream.listen((presence) {
+  final isOnline = presence['type'] == null || presence['type'] == 'available';
+  print('User is ${isOnline ? 'online' : 'offline'}');
+});
+
+// Cleanup
+messagingManager.dispose();
+```
+
+---
+
+## Foldable Device Support
+
+```dart
+final foldStateService = FoldStateService();
+
+foldStateService.foldStateStream.listen((state) {
+  switch (state) {
+    case FoldState.flat:
+      print('Device is flat');
+    case FoldState.folded:
+      print('Device is folded');
+    case FoldState.halfOpen:
+      print('Device is half open');
+    case FoldState.unknown:
+      print('Fold state unknown');
+  }
+});
+
+if (foldStateService.isFolded) {
+  // Adjust UI for folded state
+}
+
+foldStateService.dispose();
+```
+
+---
 
 ## Call States
 
@@ -372,226 +361,140 @@ No additional configuration required. The SDK works out of the box on Windows.
 | `idle`      | No active call            |
 | `calling`   | Outgoing call in progress |
 | `incoming`  | Incoming call received    |
-| `connected` | Call established          |
+| `connected` | Call connected            |
 | `ended`     | Call ended                |
+
+---
 
 ## API Reference
 
-### NexaconSDK (Simplified API)
-
-The simplified high-level API for quick integration.
+### NexaconSDK _(Simplified)_
 
 ```dart
-final sdk = NexaconSDK(
-  apiKey: String,
-  secretKey: String,
-  baseUrl: String, // optional
-);
+NexaconSDK({required String apiKey, required String secretKey, String? baseUrl})
 ```
 
-#### Methods
+| Method                                                            | Description                                  |
+| ----------------------------------------------------------------- | -------------------------------------------- |
+| `startCall({required to, required username, name, audio, video})` | Start a call — handles everything internally |
+| `acceptCall({audio, video})`                                      | Accept an incoming call                      |
+| `rejectCall()`                                                    | Reject an incoming call                      |
+| `endCall()`                                                       | End the current call                         |
+| `toggleMute(bool muted)`                                          | Toggle microphone                            |
+| `toggleSpeaker(bool enabled)`                                     | Toggle speaker                               |
+| `toggleVideo(bool enabled)`                                       | Toggle video                                 |
+| `switchCamera()`                                                  | Switch front/back camera                     |
+| `dispose()`                                                       | Cleanup resources                            |
 
-- `startCall({required String to, required String username, String? name, bool audio, bool video})` - Start a call (handles all complexity internally)
-- `acceptCall({bool audio, bool video})` - Accept an incoming call
-- `rejectCall()` - Reject an incoming call
-- `endCall()` - End the current call
-- `toggleMute(bool muted)` - Toggle microphone
-- `toggleSpeaker(bool enabled)` - Toggle speaker
-- `toggleVideo(bool enabled)` - Toggle video
-- `switchCamera()` - Switch between front/back camera
-- `dispose()` - Cleanup resources
+| Property       | Type       | Description           |
+| -------------- | ---------- | --------------------- |
+| `callDuration` | `Duration` | Current call duration |
 
-#### Properties
+| Callback             | Signature             | Description               |
+| -------------------- | --------------------- | ------------------------- |
+| `onCallStateChanged` | `Function(CallState)` | Call state updates        |
+| `onIncomingCall`     | `Function(String)`    | Incoming call received    |
+| `onCallEnded`        | `Function(String)`    | Call ended with reason    |
+| `onError`            | `Function(String)`    | Error occurred            |
+| `onLocalStream`      | `Function()`          | Local video stream ready  |
+| `onRemoteStream`     | `Function()`          | Remote video stream ready |
 
-- `callDuration` - Current call duration
+---
 
-#### Callbacks
-
-- `onCallStateChanged` - Called when call state changes
-- `onIncomingCall` - Called when receiving an incoming call
-- `onCallEnded` - Called when call ends
-- `onError` - Called when an error occurs
-- `onLocalStream` - Called when local stream is received
-- `onRemoteStream` - Called when remote stream is received
-
-### NexaconClient (Advanced API)
-
-Main client for API interactions.
+### NexaconClient _(Advanced)_
 
 ```dart
-final client = NexaconClient(
-  apiKey: String,
-  secretKey: String,
-  baseUrl: String,
-);
+NexaconClient({required String apiKey, required String secretKey, String? baseUrl})
 ```
+
+| Method                                 | Description                        |
+| -------------------------------------- | ---------------------------------- |
+| `auth.getNxToken({required username})` | Generate NX token                  |
+| `setToken(String token)`               | Set NX token for API auth          |
+| `createCallManager({...})`             | Create a CallManager instance      |
+| `createMessagingManager()`             | Create a MessagingManager instance |
+| `close()`                              | Close the client                   |
+
+---
 
 ### CallManager
 
-Manages P2P calls with automatic signaling.
+| Method                                      | Description          |
+| ------------------------------------------- | -------------------- |
+| `initiateCall({required to, audio, video})` | Start outgoing call  |
+| `acceptCall({audio, video})`                | Accept incoming call |
+| `rejectCall()`                              | Reject incoming call |
+| `endCall()`                                 | End current call     |
+| `dispose()`                                 | Cleanup resources    |
 
-```dart
-final callManager = await client.createCallManager(
-  nxtoken: String,
-  nxid: String,
-  wsUrl: String,
-  name: String?,
-  onCallStateChanged: Function(CallState)?,
-  onIncomingCall: Function(String)?,
-  onCallEnded: Function(String)?,
-  onError: Function(String)?,
-);
-```
-
-#### Methods
-
-- `initiateCall({required String to, bool audio, bool video})` - Initiate outgoing call
-- `acceptCall({bool audio, bool video})` - Accept incoming call
-- `rejectCall()` - Reject incoming call
-- `endCall()` - End current call
-- `dispose()` - Cleanup resources
-
-### Auth
-
-NX token management.
-
-```dart
-final response = await client.auth.getNxToken(
-  username: String,
-);
-```
+---
 
 ### MessagingManager
 
-Real-time messaging with presence and read receipts.
+| Stream              | Description       |
+| ------------------- | ----------------- |
+| `messageStream`     | Incoming messages |
+| `typingStream`      | Typing indicators |
+| `readReceiptStream` | Read receipts     |
+| `presenceStream`    | Presence changes  |
 
-```dart
-final messagingManager = client.createMessagingManager();
-```
+| Method                                         | Description        |
+| ---------------------------------------------- | ------------------ |
+| `sendMessage({required to, required message})` | Send a message     |
+| `sendTypingIndicator(to, {isTyping})`          | Send typing status |
+| `sendReadReceipt(to, messageId)`               | Send read receipt  |
+| `dispose()`                                    | Cleanup            |
 
-#### Streams
-
-- `messageStream` - Incoming chat messages
-- `typingStream` - Typing indicators
-- `readReceiptStream` - Read confirmations
-- `deliveryReceiptStream` - Delivery confirmations (XEP-0184)
-- `presenceStream` - Online/offline status
-
-#### Methods
-
-- `sendMessage({required String to, required String message, String messageType})` - Send message
-- `sendTypingIndicator(String to, {bool isTyping})` - Send typing status
-- `sendReadReceipt(String to, String messageId)` - Send read receipt
-- `dispose()` - Cleanup resources
-
-### FoldStateService
-
-Foldable device state detection service.
-
-```dart
-final foldStateService = FoldStateService();
-```
-
-#### Streams
-
-- `foldStateStream` - Stream of fold state changes
-
-#### Properties
-
-- `currentState` - Current fold state
-- `isFolded` - Whether device is folded
-- `isFlat` - Whether device is flat
-- `isHalfOpen` - Whether device is half open
-
-#### Methods
-
-- `updateFoldState(FoldState state)` - Manually update fold state
-- `dispose()` - Cleanup resources
+---
 
 ## Troubleshooting
 
-### Common Issues
+### 403 Error on Call Initiation
 
-#### 403 Error When Initiating Calls
+**Cause**: NX token not set on the client.
 
-**Problem**: You get a 403 error when calling `initiateCall()`.
-
-**Solution**: Make sure to set the NX token on the client after generating it:
+**Fix** (Advanced API only — `NexaconSDK` handles this automatically):
 
 ```dart
-final nxResponse = await client.auth.getNxToken(username: '+255788811191');
-final nxtoken = nxResponse['token'];
-
-// IMPORTANT: This line is required for API authentication
-client.setToken(nxtoken);
+client.setToken(nxtoken); // Must be called after getNxToken()
 ```
 
-#### Connection Timeout
+### XMPP Connection Timeout
 
-**Problem**: WebSocket connection times out or fails to connect.
+**Cause**: WebSocket URL uses `https://` instead of `wss://`.
 
-**Solution**:
+**Fix**: The SDK converts this automatically. Verify the `nxws` field from `getNxToken()` is reachable.
 
-- Check your internet connection
-- Verify the `wsUrl` is correct and accessible
-- Ensure your firewall allows WebSocket connections
-- The SDK has built-in automatic reconnection with exponential backoff
+### Camera/Microphone Not Working
 
-#### Camera/Microphone Not Working
+- **Android**: Add permissions to `AndroidManifest.xml`
+- **iOS**: Add keys to `Info.plist`
+- **Web**: App must be served over HTTPS
 
-**Problem**: Camera or microphone doesn't work during calls.
+### Call Stuck in "Calling"
 
-**Solution**:
+- Ensure the callee is online and has the SDK initialized
+- Call times out after **60 seconds** if not accepted
 
-- **Android**: Ensure permissions are granted in `AndroidManifest.xml`
-- **iOS**: Ensure permissions are added to `Info.plist` and granted by user
-- **Web**: Ensure the app is served over HTTPS (required for WebRTC)
-- Check if the device has another app using the camera/microphone
+### Console Log Reference
 
-#### Call State Stuck in "Calling"
-
-**Problem**: Call state remains in "calling" and never transitions.
-
-**Solution**:
-
-- Ensure both users have stable internet connections
-- Check if the callee is online and has the SDK initialized
-- Verify the recipient's JID is correct
-- The call will timeout after 60 seconds if not accepted
-
-#### XMPP Connection Issues
-
-**Problem**: XMPP connection fails or disconnects frequently.
-
-**Solution**:
-
-- Verify the `nxid` and `nxtoken` are valid
-- Check if the XMPP server is accessible
-- The SDK automatically reconnects with exponential backoff
-- Check console logs for detailed error messages
-
-### Debug Mode
-
-Enable detailed logging by checking the console output. The SDK provides emoji-based logging:
-
-- 🔐 - Authentication operations
-- 📞 - Call operations
-- 📡 - Signaling/WebRTC operations
-- ❌ - Errors
-- ✅ - Success operations
+| Emoji | Meaning            |
+| ----- | ------------------ |
+| 🔐    | Authentication     |
+| 📞    | Call operations    |
+| 📡    | Signaling / WebRTC |
+| ✅    | Success            |
+| ❌    | Error              |
+| ⚠️    | Warning            |
 
 ### Getting Help
 
-If you encounter issues not covered here:
+1. 📖 [Full Documentation](https://nexacon-flutter-sdk.readthedocs.io/)
+2. 💡 [Example App](https://github.com/jenadiusnicholaus/nexacon-flutter-sdk/tree/main/example)
+3. 🐛 [Report an Issue](https://github.com/jenadiusnicholaus/nexacon-flutter-sdk/issues)
 
-1. Check the [full documentation](https://nexacon-flutter-sdk.readthedocs.io/)
-2. Review the [example app](https://github.com/jenadiusnicholaus/nexacon-flutter-sdk/tree/main/example)
-3. Open an issue on [GitHub](https://github.com/jenadiusnicholaus/nexacon-flutter-sdk/issues)
-
-## Documentation
-
-Full documentation available at [nexacon-flutter-sdk.readthedocs.io](https://nexacon-flutter-sdk.readthedocs.io/)
+---
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License — see [LICENSE](LICENSE) for details.
