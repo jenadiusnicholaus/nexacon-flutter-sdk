@@ -151,7 +151,7 @@ class NexaconSDK {
   /// call invitation signal arrives from the caller.
   ///
   /// This is the correct way to handle incoming calls — it waits for the
-  /// XMPP `callInvitation` signal before calling [acceptCall], avoiding
+  /// NX `callInvitation` signal before calling [acceptCall], avoiding
   /// the "No incoming call to accept" error.
   ///
   /// [username] Your username/phone number
@@ -209,15 +209,15 @@ class NexaconSDK {
 
   /// Accept an incoming call using data from a push notification payload.
   ///
-  /// Use this when FCM/push already delivered the call data (roomId, callerJid)
-  /// so you don't need to wait for the XMPP callInvitation signal.
+  /// Use this when FCM/push already delivered the call data (roomId, callerNxId)
+  /// so you don't need to wait for the NX callInvitation signal.
   /// This is the correct path when the app is opened from a push notification.
   ///
-  /// For the XMPP-first path (app already in foreground), use [acceptWhenReady].
+  /// For the NX-first path (app already in foreground), use [acceptWhenReady].
   ///
   /// [username] Your username/phone number
   /// [roomId] Room ID from the FCM push payload
-  /// [callerJid] Caller's JID from the FCM push payload
+  /// [callerNxId] Caller's NX ID from the FCM push payload
   /// [callerName] Caller display name (optional)
   /// [name] Your display name (optional)
   /// [audio] Enable audio (default: true)
@@ -225,7 +225,7 @@ class NexaconSDK {
   Future<void> acceptFromNotification({
     required String username,
     required String roomId,
-    required String callerJid,
+    required String callerNxId,
     String? callerName,
     String? name,
     bool audio = true,
@@ -235,10 +235,10 @@ class NexaconSDK {
       print('📲 Accepting call from push notification: room=$roomId');
       await initialize(username: username, name: name);
 
-      // Inject call state directly — no need to wait for XMPP signal
+      // Inject call state directly — no need to wait for NX signal
       _callManager!.prepareIncomingCall(
         roomId: roomId,
-        callerJid: callerJid,
+        callerNxId: callerNxId,
         callerName: callerName ?? 'Unknown',
       );
 
