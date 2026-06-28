@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2026-06-28
+
+### Fixed
+
+- **Critical**: WebRTC offer never reached consultant after `callResponse` due to wrong `_peerJid`
+- `XmppManager` now injects `message.from` (actual sender XMPP JID) into all signaling messages
+- `CallManager._handleCallResponse()` now updates `_peerJid` to the real sender JID from the XMPP envelope, ensuring `webrtcOffer` and ICE candidates are routed correctly
+
 ## [1.2.4] - 2026-06-28
 
 ### Added

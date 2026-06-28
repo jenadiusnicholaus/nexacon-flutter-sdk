@@ -391,6 +391,14 @@ class CallManager {
 
   /// Handle call response — just completes the waiting completer
   void _handleCallResponse(SignalingMessage message) {
+    // Update _peerJid to the actual sender's XMPP JID so webrtcOffer reaches them
+    final actualFromJid = message.data['fromJid'] as String?;
+    if (actualFromJid != null && actualFromJid.isNotEmpty) {
+      print(
+          '📡 Updating peer JID from callResponse: $_peerJid → $actualFromJid');
+      _peerJid = actualFromJid;
+    }
+
     if (_callResponseCompleter != null &&
         !_callResponseCompleter!.isCompleted) {
       if (message.data['accepted'] != true) {

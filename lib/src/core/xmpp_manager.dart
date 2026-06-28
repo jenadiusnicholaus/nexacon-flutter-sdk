@@ -87,6 +87,10 @@ class XmppManager {
 
             // Route to appropriate stream based on message type
             if (data['type'] != null && _isSignalingMessage(data['type'])) {
+              // Inject the actual sender JID so CallManager can update _peerJid
+              if (message.from != null) {
+                data['fromJid'] = message.from;
+              }
               _signalingController.add(data);
             } else {
               _messageController.add(data);
