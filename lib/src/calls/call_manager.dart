@@ -19,9 +19,9 @@ class CallManager {
 
   String? _currentRoomId;
   String? _currentCallId;
-  String? _myJid;
+  String? _myNxId;
   String? _myName;
-  String? _peerJid;
+  String? _peerNxId;
   CallType? _callType;
   CallState _callState = CallState.idle;
   Completer<void>? _callResponseCompleter;
@@ -46,17 +46,17 @@ class CallManager {
   });
 
   /// Initialize the call manager with NX credentials
-  /// Uses the global XmppManager for signaling
+  /// Uses the global NX manager for signaling
   Future<bool> initialize({
     required String nxid,
     required String nxtoken,
     required String wsUrl,
     String? name,
   }) async {
-    _myJid = nxid;
+    _myNxId = nxid;
     _myName = name ?? nxid.split('@')[0];
 
-    // Connect via global XMPP manager
+    // Connect via global NX manager
     final connected = await _nxManager.connect(
       jid: nxid,
       password: nxtoken,
@@ -68,7 +68,7 @@ class CallManager {
       return false;
     }
 
-    // Listen for signaling messages from global XMPP
+    // Listen for signaling messages from global NX
     _nxManager.signalingStream.listen((data) {
       try {
         final signalingMessage = SignalingMessage.fromJson(data);
@@ -78,13 +78,13 @@ class CallManager {
       }
     });
 
-    // Initialize signaling service with XMPP send capability
+    // Initialize signaling service with NX send capability
     _signalingService = SignalingService(
       onMessageReceived: _handleSignalingMessage,
       onSendMessage: (message) {
-        // Send via global XMPP to peer
-        if (_peerJid != null) {
-          _nxManager.sendMessage(_peerJid!, message);
+        // Send via global NX to peer
+        if (_peerNxId != null) {
+          _nxManager.sendMessage(_peerNxId!, message);
         }
       },
     );
@@ -174,22 +174,22 @@ class CallManager {
 
       _currentRoomId = 'call_${DateTime.now().millisecondsSinceEpoch}';
 
-      // Initiate call via API (sends FCM + XMPP)
+      // Initiate call via API (sends FCM + NX signaling)
       final response = await _client.calls.initiateP2PCall(
         to: to,
         room: _currentRoomId,
       );
 
       _currentCallId = response['call_id'];
-      _peerJid = _normalizePeerJid(to);
-      print('📡 Caller JID: $_myJid, Peer JID: $_peerJid (from: $to)');
+      _peerNxId = _resolveNxId(to);
+      print('📡 Caller NxID: $_myNxId, Peer NxID: $_peerNxId (from: $to)');
 
-      // Send XMPP call invitation
+      // Send NX call invitation
       _signalingService?.sendMessage(
         _signalingService!.createCallInvitation(
           roomId: _currentRoomId!,
           callType: video ? 'video' : 'audio',
-          fromJid: _myJid!,
+          fromNxId: _myNxId!,
           fromName: _myName!,
         ),
       );
@@ -240,16 +240,16 @@ class CallManager {
   }
 
   /// Inject incoming call state from push notification data.
-  /// Use this when FCM/push payload already contains roomId and callerJid
-  /// so there is no need to wait for the XMPP callInvitation signal.
+  /// Use this when FCM/push payload already contains roomId and callerNxId
+  /// so there is no need to wait for the NX callInvitation signal.
   void prepareIncomingCall({
     required String roomId,
-    required String callerJid,
+    required String callerNxId,
     String callerName = 'Unknown',
   }) {
     if (_callState != CallState.idle) return;
     _currentRoomId = roomId;
-    _peerJid = callerJid;
+    _peerNxId = callerNxId;
     _setCallState(CallState.incoming);
     onIncomingCall?.call(callerName);
   }
@@ -258,7 +258,7 @@ class CallManager {
   void handleIncomingCall(SignalingMessage message) {
     if (_callState != CallState.idle) {
       // Reject if already in a call
-      _peerJid = message.data['fromJid'];
+      _peerNxId = message.data['fromNxId'];
       _signalingService?.sendMessage(
         _signalingService!.createCallResponse(
           roomId: message.data['roomId'],
@@ -269,7 +269,7 @@ class CallManager {
     }
 
     _currentRoomId = message.data['roomId'];
-    _peerJid = message.data['fromJid'];
+    _peerNxId = message.data['fromNxId'];
     _setCallState(CallState.incoming);
 
     onIncomingCall?.call(message.data['fromName'] ?? 'Unknown');
@@ -391,12 +391,12 @@ class CallManager {
 
   /// Handle call response — just completes the waiting completer
   void _handleCallResponse(SignalingMessage message) {
-    // Update _peerJid to the actual sender's XMPP JID so webrtcOffer reaches them
-    final actualFromJid = message.data['fromJid'] as String?;
-    if (actualFromJid != null && actualFromJid.isNotEmpty) {
+    // Update _peerNxId to the actual sender's NX ID so webrtcOffer reaches them
+    final actualFromNxId = message.data['fromNxId'] as String?;
+    if (actualFromNxId != null && actualFromNxId.isNotEmpty) {
       print(
-          '📡 Updating peer JID from callResponse: $_peerJid → $actualFromJid');
-      _peerJid = actualFromJid;
+          '📡 Updating peer NxID from response: $_peerNxId → $actualFromNxId');
+      _peerNxId = actualFromNxId;
     }
 
     if (_callResponseCompleter != null &&
@@ -466,23 +466,23 @@ class CallManager {
     }
   }
 
-  /// Normalize a phone number or partial JID to a full XMPP JID.
-  /// The Nexacon server strips country code prefixes (e.g. +255 → bare number).
-  /// We detect the prefix length by comparing our own bound JID with the raw phone.
-  String _normalizePeerJid(String to) {
-    if (to.contains('@')) return to; // Already a full JID
+  /// Resolve a phone number to a full NX network ID.
+  /// The NX server strips country code prefixes (e.g. +255 → bare number).
+  /// We detect the prefix length by comparing our own bound NxID with the raw phone.
+  String _resolveNxId(String to) {
+    if (to.contains('@')) return to; // Already a full NxID
 
-    final domain = (_myJid != null && _myJid!.contains('@'))
-        ? _myJid!.split('@')[1]
+    final domain = (_myNxId != null && _myNxId!.contains('@'))
+        ? _myNxId!.split('@')[1]
         : 'nxservice.quantumvision-tech.com';
 
     // Strip leading +
     var digits = to.replaceAll(RegExp(r'^\+'), '');
 
-    // If we know our own JID local part, use its length to trim the peer digits.
-    // This removes the country code prefix that the Nexacon server strips.
-    if (_myJid != null && _myJid!.contains('@')) {
-      final myLocal = _myJid!.split('@')[0];
+    // If we know our own NxID local part, use its length to trim the peer digits.
+    // This removes the country code prefix that the NX server strips.
+    if (_myNxId != null && _myNxId!.contains('@')) {
+      final myLocal = _myNxId!.split('@')[0];
       if (digits.length > myLocal.length) {
         digits = digits.substring(digits.length - myLocal.length);
       }

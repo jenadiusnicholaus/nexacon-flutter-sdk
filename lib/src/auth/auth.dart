@@ -11,8 +11,8 @@ class Auth {
   ///
   /// Returns a Map containing:
   /// - token: The NX authentication token
-  /// - jid: The user's JID (Jabber ID)
-  /// - nxws: The WebSocket URL for XMPP connection
+  /// - jid: The user's NX network ID
+  /// - nxws: The WebSocket URL for NX connection
   ///
   /// Throws [ValidationException] if username is empty
   /// Throws [APIException] if the request fails
@@ -68,8 +68,8 @@ class Auth {
     }
   }
 
-  /// Refresh XMPP token
-  Future<Map<String, dynamic>> refreshXMPPToken({
+  /// Refresh NX token
+  Future<Map<String, dynamic>> refreshNxToken({
     required String refreshToken,
   }) async {
     if (refreshToken.isEmpty) {

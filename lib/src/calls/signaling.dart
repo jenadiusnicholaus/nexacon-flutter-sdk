@@ -73,9 +73,7 @@ class SignalingMessage {
   String toJsonString() => jsonEncode(toJson());
 }
 
-/// Signaling Service - Handles XMPP signaling messages
-/// Note: This is a stub implementation. Users need to integrate
-/// their own XMPP client (e.g., xmpp_stone, smack, etc.)
+/// Signaling Service - Handles NX signaling messages
 class SignalingService {
   final Function(SignalingMessage)? onMessageReceived;
   final Function(String)? onSendMessage;
@@ -85,13 +83,13 @@ class SignalingService {
     this.onSendMessage,
   });
 
-  /// Send a signaling message via XMPP
+  /// Send a signaling message via NX
   void sendMessage(SignalingMessage message) {
     final jsonStr = message.toJsonString();
     onSendMessage?.call(jsonStr);
   }
 
-  /// Handle incoming XMPP message
+  /// Handle incoming NX message
   void handleIncomingMessage(String jsonStr) {
     try {
       final json = jsonDecode(jsonStr) as Map<String, dynamic>;
@@ -107,7 +105,7 @@ class SignalingService {
   SignalingMessage createCallInvitation({
     required String roomId,
     required String callType,
-    required String fromJid,
+    required String fromNxId,
     required String fromName,
   }) {
     return SignalingMessage(
@@ -115,7 +113,7 @@ class SignalingService {
       data: {
         'roomId': roomId,
         'callType': callType,
-        'fromJid': fromJid,
+        'fromNxId': fromNxId,
         'fromName': fromName,
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       },

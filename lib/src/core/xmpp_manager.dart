@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../xmpp/xmpp_client.dart';
 
 /// Global connection manager (internal)
-/// Maintains a single connection for both chat and call signaling
+/// Maintains a single NX connection for both chat and call signaling
 class XmppManager {
   XmppClient? _xmppClient;
   String? _jid;
@@ -46,10 +46,10 @@ class XmppManager {
   /// Current connection state
   bool get isConnected => _isConnected;
 
-  /// Current JID
+  /// Current NX ID
   String? get jid => _jid;
 
-  /// Initialize and connect to XMPP server
+  /// Initialize and connect to NX server
   Future<bool> connect({
     required String jid,
     required String password,
@@ -173,15 +173,15 @@ class XmppManager {
     return signalingTypes.contains(type);
   }
 
-  /// Send a message to a specific JID
+  /// Send a message to a specific NX ID
   void sendMessage(String to, String message) {
     if (!_isConnected || _xmppClient == null) {
-      throw Exception('XMPP not connected');
+      throw Exception('NX not connected');
     }
     _xmppClient!.sendMessage(to, message);
   }
 
-  /// Disconnect from XMPP server
+  /// Disconnect from NX server
   Future<void> disconnect() async {
     if (_xmppClient != null) {
       _xmppClient!.disconnect();

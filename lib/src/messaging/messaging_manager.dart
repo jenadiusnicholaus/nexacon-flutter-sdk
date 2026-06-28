@@ -43,7 +43,7 @@ class MessagingManager {
   Stream<Map<String, dynamic>> get presenceStream => _presenceController.stream;
 
   MessagingManager(this._nxManager) {
-    // Subscribe to XMPP message stream and route by type
+    // Subscribe to NX message stream and route by type
     _nxManager.messageStream.listen((data) {
       final type = data['type'] as String?;
       if (type == 'typing') {
