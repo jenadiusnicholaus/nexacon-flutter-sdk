@@ -92,7 +92,41 @@ class XmppManager {
               _messageController.add(data);
             }
           } catch (e) {
-            // If not JSON, treat as plain text message
+            // If not JSON, check if it's a Nexacon plain-text call URL
+            // e.g. "Incoming p2p call. Click to join: https://...?room=call_xxx&caller=7888111189&..."
+            final body = message.body ?? '';
+            if (body.contains('/nexacon-call.html') ||
+                body.contains('room=call_')) {
+              try {
+                // Extract the URL part
+                final urlMatch = RegExp(r'https://\S+').firstMatch(body);
+                if (urlMatch != null) {
+                  final uri = Uri.tryParse(urlMatch.group(0)!);
+                  if (uri != null) {
+                    final roomId = uri.queryParameters['room'];
+                    final callerNum = uri.queryParameters['caller'];
+                    if (roomId != null && callerNum != null) {
+                      final domain = _jid?.split('@').length == 2
+                          ? _jid!.split('@')[1]
+                          : 'nxservice.quantumvision-tech.com';
+                      final callerJid = callerNum.contains('@')
+                          ? callerNum
+                          : '$callerNum@$domain';
+                      _signalingController.add({
+                        'type': 'call_invitation',
+                        'roomId': roomId,
+                        'callType': uri.queryParameters['type'] ?? 'audio',
+                        'fromJid': message.from ?? callerJid,
+                        'fromName': callerNum,
+                        'timestamp': DateTime.now().millisecondsSinceEpoch,
+                      });
+                      return;
+                    }
+                  }
+                }
+              } catch (_) {}
+            }
+            // Generic plain text message
             _messageController.add({
               'message': message.body,
               'from': message.from,

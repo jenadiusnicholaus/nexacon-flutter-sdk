@@ -8,13 +8,7 @@ import 'signaling.dart';
 import '../core/exceptions.dart';
 
 /// Call state enum
-enum CallState {
-  idle,
-  calling,
-  incoming,
-  connected,
-  ended,
-}
+enum CallState { idle, calling, incoming, connected, ended }
 
 /// Call Manager - Orchestrates full P2P call flow
 class CallManager {
@@ -158,8 +152,9 @@ class CallManager {
   }
 
   /// Start collecting call statistics
-  void startCallStatsCollection(
-      {Duration interval = const Duration(seconds: 2)}) {
+  void startCallStatsCollection({
+    Duration interval = const Duration(seconds: 2),
+  }) {
     _webrtcService?.startStatsCollection(interval: interval);
   }
 
@@ -186,7 +181,8 @@ class CallManager {
       );
 
       _currentCallId = response['call_id'];
-      _peerJid = to;
+      _peerJid = _normalizePeerJid(to);
+      print('📡 Caller JID: $_myJid, Peer JID: $_peerJid (from: $to)');
 
       // Send XMPP call invitation
       _signalingService?.sendMessage(
@@ -280,10 +276,7 @@ class CallManager {
   }
 
   /// Accept an incoming call
-  Future<void> acceptCall({
-    bool audio = true,
-    bool video = true,
-  }) async {
+  Future<void> acceptCall({bool audio = true, bool video = true}) async {
     if (_callState != CallState.incoming || _currentRoomId == null) {
       throw ValidationException('No incoming call to accept');
     }
@@ -368,6 +361,7 @@ class CallManager {
 
   /// Handle signaling message from XMPP
   void _handleSignalingMessage(SignalingMessage message) {
+    print('🔔 CallManager signaling: ${message.type} (state=$_callState)');
     switch (message.type) {
       case SignalingMessageType.callInvitation:
         handleIncomingCall(message);
@@ -462,6 +456,31 @@ class CallManager {
     } catch (e) {
       print('Failed to add ICE candidate: $e');
     }
+  }
+
+  /// Normalize a phone number or partial JID to a full XMPP JID.
+  /// The Nexacon server strips country code prefixes (e.g. +255 → bare number).
+  /// We detect the prefix length by comparing our own bound JID with the raw phone.
+  String _normalizePeerJid(String to) {
+    if (to.contains('@')) return to; // Already a full JID
+
+    final domain = (_myJid != null && _myJid!.contains('@'))
+        ? _myJid!.split('@')[1]
+        : 'nxservice.quantumvision-tech.com';
+
+    // Strip leading +
+    var digits = to.replaceAll(RegExp(r'^\+'), '');
+
+    // If we know our own JID local part, use its length to trim the peer digits.
+    // This removes the country code prefix that the Nexacon server strips.
+    if (_myJid != null && _myJid!.contains('@')) {
+      final myLocal = _myJid!.split('@')[0];
+      if (digits.length > myLocal.length) {
+        digits = digits.substring(digits.length - myLocal.length);
+      }
+    }
+
+    return '$digits@$domain';
   }
 
   /// Wait for call response (with timeout)

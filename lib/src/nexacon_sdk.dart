@@ -106,7 +106,10 @@ class NexaconSDK {
     bool video = false,
   }) async {
     try {
-      await initialize(username: username, name: name);
+      // Reuse pre-warmed connection if available to avoid duplicate XMPP sessions
+      if (_callManager == null) {
+        await initialize(username: username, name: name);
+      }
 
       await _callManager!.initiateCall(
         to: to,
@@ -191,7 +194,10 @@ class NexaconSDK {
     });
 
     try {
-      await initialize(username: username, name: name);
+      // Reuse pre-warmed connection if available to avoid duplicate XMPP sessions
+      if (_callManager == null) {
+        await initialize(username: username, name: name);
+      }
       await completer.future;
     } catch (e) {
       onError?.call('Failed to accept incoming call: $e');

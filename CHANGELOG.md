@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4] - 2026-06-28
+
+### Added
+
+- `_normalizePeerJid()` in CallManager to correctly format XMPP JIDs by stripping country code prefix that Nexacon server strips
+- Debug logging for signaling messages and JID resolution in CallManager
+
+### Fixed
+
+- Reuse pre-warmed XMPP connection in `startCall()` and `acceptWhenReady()` to avoid duplicate sessions
+- XMPP JID mismatch when caller used formatted phone number (+255...) but server stored bare digits
+
 ## [1.2.3] - 2026-06-28
 
 ### Fixed
