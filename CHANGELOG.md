@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-06-28
+
+### Added
+
+- `prepareIncomingCall()` to CallManager for injecting call state from push notification payload
+- `acceptFromNotification()` to NexaconSDK for accepting calls using FCM/push data
+- Documentation for dual-path incoming call support (XMPP vs FCM)
+
+### Changed
+
+- Updated README with XMPP-first and FCM-first incoming call examples
+
+## [1.2.1] - 2026-06-27
+
+### Added
+
+- `acceptWhenReady()` to NexaconSDK for simplified incoming call handling
+- Automatically waits for XMPP call invitation signal before accepting
+
+### Fixed
+
+- Call response timeout when using invalid recipient identifier
+
+## [1.2.0] - 2026-06-27
+
+### Added
+
+- Simplified NexaconSDK API with `startCall()` and `acceptCall()` methods
+- Automatic connection management and signaling setup
+- Streamlined call initialization for both outgoing and incoming calls
+
+### Changed
+
+- Deprecated manual CallManager initialization in favor of simplified API
+- Updated README with simplified quick start guide
+
 ## [1.1.5] - 2026-06-25
 
 ### Fixed
