@@ -31,6 +31,8 @@ A comprehensive Flutter SDK for Nexacon API — providing plug-and-play P2P audi
 - **P2P Calling**: Full WebRTC peer-to-peer audio/video calling with automatic signaling
 - **NX Token Management**: Automatic token generation, validation, and client authentication
 - **Incoming Call Support**: `initialize()` + `acceptCall()` for clean incoming call handling
+- **Consecutive Call Safety**: SDK automatically resets all internal state after each call — safe for back-to-back calls
+- **Stale Signal Guard**: Signaling messages from previous calls are filtered by room ID and cancelled subscription — no ghost `call_end` events
 - **Real-Time Messaging**: Instant messaging with typing indicators and read receipts
 - **Presence Management**: Online/offline status tracking
 - **Call Controls**: Mute, speaker toggle, video toggle, camera switch, duration tracking
@@ -48,7 +50,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  nexacon_sdk: ^1.2.0
+  nexacon_sdk: ^1.3.4
 ```
 
 Install:
@@ -182,9 +184,9 @@ await sdk.dispose();
 
 Incoming calls can be handled via two paths:
 
-### Path 1: XMPP (app in foreground)
+### Path 1: NX (app in foreground)
 
-Use `acceptWhenReady()` when the app is already open — it waits for the XMPP `callInvitation` signal:
+Use `acceptWhenReady()` when the app is already open — it waits for the NX `callInvitation` signal:
 
 ```dart
 import 'package:nexacon_sdk/nexacon_sdk.dart';
@@ -200,7 +202,7 @@ sdk.onIncomingCall     = (name)  => print('📞 Incoming from: $name');
 sdk.onCallEnded        = (reason)=> print('📞 Ended: $reason');
 sdk.onError            = (error) => print('❌ Error: $error');
 
-// Initialize and automatically accept when XMPP signal arrives
+// Initialize and automatically accept when NX signal arrives
 await sdk.acceptWhenReady(
   username: '+255788811191',
   audio: true,
@@ -214,14 +216,14 @@ await sdk.dispose();
 
 ### Path 2: Push Notification (app opened from FCM)
 
-Use `acceptFromNotification()` when the user opens the app from a push notification — the FCM payload already contains `roomId` and `callerJid`:
+Use `acceptFromNotification()` when the user opens the app from a push notification — the FCM payload already contains `roomId` and `callerNxId`:
 
 ```dart
 // Called when user taps the FCM notification
 await sdk.acceptFromNotification(
   username: '+255788811191',
-  roomId: fcmData['room'],      // from FCM payload
-  callerJid: fcmData['caller'], // from FCM payload
+  roomId: fcmData['room'],        // from FCM payload
+  callerNxId: fcmData['caller'],  // from FCM payload (caller's phone/NX ID)
   callerName: fcmData['caller_name'],
   audio: true,
   video: false,
@@ -388,20 +390,20 @@ foldStateService.dispose();
 NexaconSDK({required String apiKey, required String secretKey, String? baseUrl})
 ```
 
-| Method                                                                                           | Description                                                      |
-| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| `initialize({required username, name})`                                                          | Connect to signaling without dialing — use for incoming calls    |
-| `startCall({required to, required username, name, audio, video})`                                | Start outgoing call — handles everything internally              |
-| `acceptWhenReady({required username, name, audio, video, timeout})`                              | Initialize and auto-accept when XMPP signal arrives (foreground) |
-| `acceptFromNotification({required username, roomId, callerJid, callerName, name, audio, video})` | Accept using FCM/push payload data (background)                  |
-| `acceptCall({audio, video})`                                                                     | Accept an incoming call (must be in `incoming` state)            |
-| `rejectCall()`                                                                                   | Reject an incoming call                                          |
-| `endCall()`                                                                                      | End the current call                                             |
-| `toggleMute(bool muted)`                                                                         | Toggle microphone                                                |
-| `toggleSpeaker(bool enabled)`                                                                    | Toggle speaker                                                   |
-| `toggleVideo(bool enabled)`                                                                      | Toggle video                                                     |
-| `switchCamera()`                                                                                 | Switch front/back camera                                         |
-| `dispose()`                                                                                      | Cleanup all resources                                            |
+| Method                                                                                            | Description                                                    |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `initialize({required username, name})`                                                           | Connect to signaling without dialing — use for incoming calls  |
+| `startCall({required to, required username, name, audio, video})`                                 | Start outgoing call — handles everything internally            |
+| `acceptWhenReady({required username, name, audio, video, timeout})`                               | Initialize and auto-accept when NX signal arrives (foreground) |
+| `acceptFromNotification({required username, roomId, callerNxId, callerName, name, audio, video})` | Accept using FCM/push payload data (background)                |
+| `acceptCall({audio, video})`                                                                      | Accept an incoming call (must be in `incoming` state)          |
+| `rejectCall()`                                                                                    | Reject an incoming call                                        |
+| `endCall()`                                                                                       | End the current call                                           |
+| `toggleMute(bool muted)`                                                                          | Toggle microphone                                              |
+| `toggleSpeaker(bool enabled)`                                                                     | Toggle speaker                                                 |
+| `toggleVideo(bool enabled)`                                                                       | Toggle video                                                   |
+| `switchCamera()`                                                                                  | Switch front/back camera                                       |
+| `dispose()`                                                                                       | Cleanup all resources                                          |
 
 | Property       | Type       | Description           |
 | -------------- | ---------- | --------------------- |
@@ -476,7 +478,7 @@ NexaconClient({required String apiKey, required String secretKey, String? baseUr
 client.setToken(nxtoken); // Must be called after getNxToken()
 ```
 
-### XMPP Connection Timeout
+### NX Connection Timeout
 
 **Cause**: WebSocket URL uses `https://` instead of `wss://`.
 
@@ -492,6 +494,30 @@ client.setToken(nxtoken); // Must be called after getNxToken()
 
 - Ensure the callee is online with the SDK initialized
 - Calls time out after **60 seconds** if not accepted
+
+### Second Call Auto-Ends After Acceptance
+
+**Cause (pre-1.3.4)**: When the NX connection is re-established for a second call, the server replays queued messages from the previous session — including the old `call_end` signal. Two bugs compounded this:
+
+1. The `CallManager` NX subscription was never cancelled on call end — an orphaned subscription could process stale signals after internal state was reset to `idle`.
+2. There was no room ID validation — any `call_end` was processed unconditionally.
+
+**Fixed in v1.3.4**:
+
+- The `StreamSubscription` is now stored and immediately cancelled in `_endCall()`, making the old `CallManager` permanently deaf after a call ends.
+- Every non-invitation signal is validated against `_currentRoomId` — mismatched room IDs are silently dropped.
+- `NexaconSDK.endCall()` nulls the internal `_callManager` so the next call always gets a completely fresh instance.
+
+**Required app-side guard** (still needed even with 1.3.4):
+
+```dart
+onOtherUserLeft: () {
+  // Only end call if the WebRTC peer actually joined.
+  // Guards against any residual state on the app layer.
+  if (!_isOtherUserConnected) return;
+  _endCall();
+},
+```
 
 ### Console Log Reference
 

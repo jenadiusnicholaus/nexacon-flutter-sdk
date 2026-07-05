@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.8] - 2026-06-28
+
+### Fixed
+
+- **Critical**: Caller never received `call_response` — JID formatting now matches nxchat (`+255...@domain`) via `NxJidUtils`
+- `call_accepted` message type now routed through XMPP signaling stream (was silently dropped)
+- Signaling messages silently dropped when `_peerNxId` was null — now logs error and surfaces via `onError`
+- `prepareIncomingCall()` now updates peer/room even when XMPP pre-warm already set incoming state
+- `fromJid` fallback when handling call invitations (not just `fromNxId`)
+
+### Added
+
+- `NxJidUtils` — shared JID formatting aligned with nxchat `NxsmService._formatJid`
+- `roomId` parameter on `initiateCall()` / `startCall()` so host apps can pass backend channel names
+- `notifyRemoteAccepted()` — FCM/backend fallback to unblock caller when XMPP response is delayed
+
 ## [1.2.7] - 2026-06-28
 
 ### Fixed

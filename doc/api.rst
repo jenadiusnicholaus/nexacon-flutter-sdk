@@ -181,21 +181,21 @@ Parameters
 ^^^^^^^^^^
 
 * **username** (String): User's phone number or identifier
-* **host** (String): XMPP host (default: 'nxservice.quantumvision-tech.com')
+* **host** (String): NX host (default: 'nxservice.quantumvision-tech.com')
 
 Returns
 ^^^^^^^
 
 ``Future<Map<String, dynamic>>``: Response containing token, jid, and wsUrl
 
-refreshXMPPToken
-^^^^^^^^^^^^^^^^
+refreshNxToken
+^^^^^^^^^^^^^
 
 Refreshes an NX token.
 
 .. code-block:: dart
 
-    Future<Map<String, dynamic>> refreshXMPPToken({
+    Future<Map<String, dynamic>> refreshNxToken({
       required String refreshToken,
     })
 

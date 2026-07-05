@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import '../xmpp/xmpp_client.dart';
+import 'nx_jid_utils.dart';
 
 /// Global connection manager (internal)
 /// Maintains a single NX connection for both chat and call signaling
@@ -84,15 +85,19 @@ class XmppManager {
         if (message.body != null) {
           try {
             final data = jsonDecode(message.body!);
+            print(
+                '📥 XmppManager received message: type=${data['type']}, from=${message.from}');
 
             // Route to appropriate stream based on message type
             if (data['type'] != null && _isSignalingMessage(data['type'])) {
-              // Inject the actual sender JID so CallManager can update _peerJid
+              // Inject normalized sender JID so CallManager routes responses correctly
               if (message.from != null) {
-                data['fromJid'] = message.from;
+                data['fromJid'] = NxJidUtils.bare(message.from!);
               }
+              print('📥 XmppManager routing to signaling stream');
               _signalingController.add(data);
             } else {
+              print('📥 XmppManager routing to message stream');
               _messageController.add(data);
             }
           } catch (e) {
@@ -165,6 +170,7 @@ class XmppManager {
     const signalingTypes = {
       'call_invitation',
       'call_response',
+      'call_accepted',
       'call_end',
       'webrtc_offer',
       'webrtc_answer',
@@ -178,7 +184,9 @@ class XmppManager {
     if (!_isConnected || _xmppClient == null) {
       throw Exception('NX not connected');
     }
-    _xmppClient!.sendMessage(to, message);
+    final formattedTo = NxJidUtils.bare(to);
+    print('📤 XmppManager: sending to $formattedTo (from: $to)');
+    _xmppClient!.sendMessage(formattedTo, message);
   }
 
   /// Disconnect from NX server

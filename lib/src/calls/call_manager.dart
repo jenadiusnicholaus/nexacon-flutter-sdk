@@ -6,6 +6,7 @@ import 'calls.dart';
 import 'webrtc.dart';
 import 'signaling.dart';
 import '../core/exceptions.dart';
+import '../core/nx_jid_utils.dart';
 
 /// Call state enum
 enum CallState { idle, calling, incoming, connected, ended }
@@ -25,6 +26,7 @@ class CallManager {
   CallType? _callType;
   CallState _callState = CallState.idle;
   Completer<void>? _callResponseCompleter;
+  StreamSubscription<dynamic>? _signalingSubscription;
 
   // Callbacks
   final Function(CallState)? onCallStateChanged;
@@ -69,8 +71,9 @@ class CallManager {
     }
 
     // Listen for signaling messages from global NX
-    _nxManager.signalingStream.listen((data) {
+    _signalingSubscription = _nxManager.signalingStream.listen((data) {
       try {
+        print('📥 CallManager received from signaling stream: $data');
         final signalingMessage = SignalingMessage.fromJson(data);
         _handleSignalingMessage(signalingMessage);
       } catch (e) {
@@ -82,10 +85,12 @@ class CallManager {
     _signalingService = SignalingService(
       onMessageReceived: _handleSignalingMessage,
       onSendMessage: (message) {
-        // Send via global NX to peer
-        if (_peerNxId != null) {
-          _nxManager.sendMessage(_peerNxId!, message);
+        if (_peerNxId == null || _peerNxId!.isEmpty) {
+          print('❌ Cannot send signaling — peer NxID is not set');
+          onError?.call('Cannot send signaling: peer not identified');
+          return;
         }
+        _nxManager.sendMessage(_peerNxId!, message);
       },
     );
 
@@ -163,6 +168,7 @@ class CallManager {
     required String to,
     bool audio = true,
     bool video = true,
+    String? roomId,
   }) async {
     if (_callState != CallState.idle) {
       throw ValidationException('Call already in progress');
@@ -172,7 +178,8 @@ class CallManager {
       _setCallState(CallState.calling);
       _callType = video ? CallType.video : CallType.audio;
 
-      _currentRoomId = 'call_${DateTime.now().millisecondsSinceEpoch}';
+      _currentRoomId =
+          roomId ?? 'call_${DateTime.now().millisecondsSinceEpoch}';
 
       // Initiate call via API (sends FCM + NX signaling)
       final response = await _client.calls.initiateP2PCall(
@@ -181,8 +188,10 @@ class CallManager {
       );
 
       _currentCallId = response['call_id'];
-      _peerNxId = _resolveNxId(to);
-      print('📡 Caller NxID: $_myNxId, Peer NxID: $_peerNxId (from: $to)');
+      _peerNxId = NxJidUtils.resolve(to, myNxId: _myNxId);
+      print(
+        '📡 Caller NxID: $_myNxId, Peer NxID: $_peerNxId (from: $to, room: $_currentRoomId)',
+      );
 
       // Send NX call invitation
       _signalingService?.sendMessage(
@@ -247,18 +256,45 @@ class CallManager {
     required String callerNxId,
     String callerName = 'Unknown',
   }) {
-    if (_callState != CallState.idle) return;
     _currentRoomId = roomId;
-    _peerNxId = callerNxId;
-    _setCallState(CallState.incoming);
-    onIncomingCall?.call(callerName);
+    _peerNxId = NxJidUtils.resolve(callerNxId, myNxId: _myNxId);
+    print(
+      '📲 prepareIncomingCall: room=$roomId peerNxId=$_peerNxId (from: $callerNxId)',
+    );
+
+    if (_callState == CallState.idle) {
+      _setCallState(CallState.incoming);
+      onIncomingCall?.call(callerName);
+    } else if (_callState == CallState.incoming ||
+        _callState == CallState.calling) {
+      // Already handling this call via XMPP pre-warm — update peer/room from FCM
+      print('📲 Updating incoming call state from notification');
+    } else if (_callState == CallState.ended) {
+      // Call was ended (likely by caller timeout) - reset to accept new incoming call
+      print('📲 Call state is ended, resetting to accept incoming call');
+      _setCallState(CallState.incoming);
+      onIncomingCall?.call(callerName);
+    } else {
+      print('⚠️ prepareIncomingCall ignored — call state is $_callState');
+    }
   }
 
   /// Handle incoming call invitation
   void handleIncomingCall(SignalingMessage message) {
     if (_callState != CallState.idle) {
-      // Reject if already in a call
-      _peerNxId = message.data['fromNxId'];
+      // If we're already accepting this call (via prepareIncomingCall from push
+      // notification), just ignore the late NX invitation — don't send a reject.
+      if (_callState == CallState.incoming || _callState == CallState.calling) {
+        print(
+          '📨 Ignoring late call_invitation — already accepting via notification',
+        );
+        return;
+      }
+      // Reject if genuinely in a different call
+      final fromNxId = message.data['fromNxId'] ?? message.data['fromJid'];
+      if (fromNxId != null) {
+        _peerNxId = NxJidUtils.resolve(fromNxId as String, myNxId: _myNxId);
+      }
       _signalingService?.sendMessage(
         _signalingService!.createCallResponse(
           roomId: message.data['roomId'],
@@ -269,7 +305,10 @@ class CallManager {
     }
 
     _currentRoomId = message.data['roomId'];
-    _peerNxId = message.data['fromNxId'];
+    final fromNxId = message.data['fromNxId'] ?? message.data['fromJid'];
+    _peerNxId = fromNxId != null
+        ? NxJidUtils.resolve(fromNxId as String, myNxId: _myNxId)
+        : _peerNxId;
     _setCallState(CallState.incoming);
 
     onIncomingCall?.call(message.data['fromName'] ?? 'Unknown');
@@ -362,12 +401,37 @@ class CallManager {
   /// Handle signaling message from XMPP
   void _handleSignalingMessage(SignalingMessage message) {
     print('🔔 CallManager signaling: ${message.type} (state=$_callState)');
+    print('🔔 Signaling data: ${message.data}');
+
+    // For every message type except callInvitation, guard against stale signals
+    // from previous calls that are queued/replayed by the XMPP server on
+    // reconnect. If the roomId in the message doesn't match the current active
+    // room, silently drop it.
+    if (message.type != SignalingMessageType.callInvitation) {
+      final incomingRoomId = message.data['roomId'] as String?;
+      if (incomingRoomId != null &&
+          _currentRoomId != null &&
+          incomingRoomId != _currentRoomId) {
+        print(
+          '⚠️ Dropping stale ${message.type} for room=$incomingRoomId (current=$_currentRoomId)',
+        );
+        return;
+      }
+      if (incomingRoomId != null && _currentRoomId == null) {
+        print(
+          '⚠️ Dropping ${message.type} for room=$incomingRoomId — no active call',
+        );
+        return;
+      }
+    }
+
     switch (message.type) {
       case SignalingMessageType.callInvitation:
         handleIncomingCall(message);
         break;
 
       case SignalingMessageType.callResponse:
+      case SignalingMessageType.callAccepted:
         _handleCallResponse(message);
         break;
 
@@ -389,25 +453,41 @@ class CallManager {
     }
   }
 
-  /// Handle call response — just completes the waiting completer
+  /// Handle call response — completes the waiting completer (caller side)
   void _handleCallResponse(SignalingMessage message) {
-    // Update _peerNxId to the actual sender's NX ID so webrtcOffer reaches them
-    final actualFromNxId = message.data['fromNxId'] as String?;
-    if (actualFromNxId != null && actualFromNxId.isNotEmpty) {
-      print(
-          '📡 Updating peer NxID from response: $_peerNxId → $actualFromNxId');
-      _peerNxId = actualFromNxId;
+    final senderNxId = (message.data['fromJid'] as String?)?.isNotEmpty == true
+        ? message.data['fromJid'] as String
+        : message.data['fromNxId'] as String?;
+    if (senderNxId != null && senderNxId.isNotEmpty) {
+      final formatted = NxJidUtils.resolve(senderNxId, myNxId: _myNxId);
+      print('📡 Updating peer NxID from response: $_peerNxId → $formatted');
+      _peerNxId = formatted;
     }
+
+    final accepted = message.data['accepted'] != false;
 
     if (_callResponseCompleter != null &&
         !_callResponseCompleter!.isCompleted) {
-      if (message.data['accepted'] != true) {
+      if (!accepted) {
         _callResponseCompleter!.completeError('Call rejected');
       } else {
+        print('✅ Call accepted signal received — proceeding with WebRTC');
         _callResponseCompleter!.complete();
       }
-    } else if (message.data['accepted'] != true) {
+    } else if (!accepted) {
       _endCall('Call rejected');
+    } else if (accepted && _callState == CallState.calling) {
+      // Late acceptance after completer cleared — still proceed if we're the caller
+      print('✅ Late call acceptance received');
+    }
+  }
+
+  /// Notify caller that remote party accepted (FCM/backend fallback path).
+  void notifyRemoteAccepted() {
+    print('📲 notifyRemoteAccepted — unblocking caller wait');
+    if (_callResponseCompleter != null &&
+        !_callResponseCompleter!.isCompleted) {
+      _callResponseCompleter!.complete();
     }
   }
 
@@ -466,31 +546,6 @@ class CallManager {
     }
   }
 
-  /// Resolve a phone number to a full NX network ID.
-  /// The NX server strips country code prefixes (e.g. +255 → bare number).
-  /// We detect the prefix length by comparing our own bound NxID with the raw phone.
-  String _resolveNxId(String to) {
-    if (to.contains('@')) return to; // Already a full NxID
-
-    final domain = (_myNxId != null && _myNxId!.contains('@'))
-        ? _myNxId!.split('@')[1]
-        : 'nxservice.quantumvision-tech.com';
-
-    // Strip leading +
-    var digits = to.replaceAll(RegExp(r'^\+'), '');
-
-    // If we know our own NxID local part, use its length to trim the peer digits.
-    // This removes the country code prefix that the NX server strips.
-    if (_myNxId != null && _myNxId!.contains('@')) {
-      final myLocal = _myNxId!.split('@')[0];
-      if (digits.length > myLocal.length) {
-        digits = digits.substring(digits.length - myLocal.length);
-      }
-    }
-
-    return '$digits@$domain';
-  }
-
   /// Wait for call response (with timeout)
   Future<void> _waitForCallResponse() async {
     _callResponseCompleter = Completer<void>();
@@ -511,6 +566,12 @@ class CallManager {
 
   /// End call and cleanup
   void _endCall(String reason) {
+    // Cancel the signaling subscription immediately so this CallManager
+    // cannot process any further messages (including stale signals from
+    // previous calls replayed on a new XMPP session).
+    _signalingSubscription?.cancel();
+    _signalingSubscription = null;
+
     _webrtcService?.endCall();
     _setCallState(CallState.ended);
     onCallEnded?.call(reason);

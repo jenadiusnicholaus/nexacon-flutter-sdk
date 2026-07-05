@@ -3,7 +3,7 @@ Messaging Service
 
 The ``Messaging`` service allows you to send direct messages to users, broadcast to multiple recipients, and manage your contact list.
 
-For real-time messaging with typing indicators and read receipts, use the ``MessagingManager`` with the global XMPP connection.
+For real-time messaging with typing indicators and read receipts, use the ``MessagingManager`` with the global NX connection.
 
 .. code-block:: dart
 

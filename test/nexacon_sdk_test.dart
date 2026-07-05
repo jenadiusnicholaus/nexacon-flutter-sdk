@@ -90,7 +90,7 @@ void main() {
     test('refreshXMPPToken throws ValidationException for empty refreshToken',
         () async {
       expect(
-        () => client.auth.refreshXMPPToken(refreshToken: ''),
+        () => client.auth..refreshNxToken(refreshToken: ''),
         throwsA(isA<ValidationException>()),
       );
     });

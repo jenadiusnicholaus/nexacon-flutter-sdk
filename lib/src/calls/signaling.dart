@@ -4,6 +4,7 @@ import 'dart:convert';
 enum SignalingMessageType {
   callInvitation,
   callResponse,
+  callAccepted,
   callEnd,
   webrtcOffer,
   webrtcAnswer,
@@ -27,6 +28,9 @@ class SignalingMessage {
         break;
       case 'call_response':
         type = SignalingMessageType.callResponse;
+        break;
+      case 'call_accepted':
+        type = SignalingMessageType.callAccepted;
         break;
       case 'call_end':
         type = SignalingMessageType.callEnd;
@@ -59,6 +63,8 @@ class SignalingMessage {
         return 'call_invitation';
       case SignalingMessageType.callResponse:
         return 'call_response';
+      case SignalingMessageType.callAccepted:
+        return 'call_accepted';
       case SignalingMessageType.callEnd:
         return 'call_end';
       case SignalingMessageType.webrtcOffer:

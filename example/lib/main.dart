@@ -1,6 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:nexacon_sdk/nexacon_sdk.dart';
 
+/// Nexacon SDK Example Application
+///
+/// Best Practices:
+/// 1. Always format phone numbers with country code (e.g., +255 for Tanzania)
+/// 2. Use NexaconSDK (high-level) for the simplest integration — it handles
+///    token management, XMPP connection, and CallManager lifecycle internally.
+/// 3. After each call, NexaconSDK.endCall() automatically nulls the internal
+///    CallManager — the next call always gets a fresh instance (safe for
+///    consecutive back-to-back calls).
+/// 4. Use _isOtherUserConnected (set only in onOtherUserJoined) to guard
+///    onOtherUserLeft — never use _isCallConnected which is set too early.
+/// 5. Always call _resetCallState() before starting or accepting a call to
+///    clear any leftover flags from a previous call.
+/// 6. Use flags (_isEndingCall, _isEndCallScheduled) to prevent duplicate
+///    endCall invocations from concurrent callbacks.
+/// 7. Always call sdk.dispose() when done to release WebRTC resources.
 void main() {
   runApp(const MyApp());
 }
@@ -35,9 +51,10 @@ class _CallExamplePageState extends State<CallExamplePage> {
   final _usernameController = TextEditingController(text: '+255788811191');
   final _recipientController = TextEditingController(text: '+255788811192');
 
-  // SDK instances
-  NexaconClient? _client;
-  CallManager? _callManager;
+  // High-level SDK instance — create once, reuse across consecutive calls.
+  // NexaconSDK.endCall() automatically nulls the internal CallManager so
+  // the next call always gets a completely fresh instance.
+  NexaconSDK? _sdk;
 
   // UI state
   String _callState = 'idle';
@@ -47,11 +64,20 @@ class _CallExamplePageState extends State<CallExamplePage> {
   bool _isVideoEnabled = true;
   Duration _callDuration = Duration.zero;
 
+  // Track whether the WebRTC peer actually joined.
+  // IMPORTANT: Use this (not _isCallConnected) to guard onOtherUserLeft.
+  // _isCallConnected is set at call initiation — too early to be reliable.
+  // _isOtherUserConnected is set only when onOtherUserJoined fires (real
+  // WebRTC connection), making it the correct gate for ending a call.
+  bool _isOtherUserConnected = false;
+
+  // Prevent duplicate endCall invocations from concurrent callbacks.
+  bool _isEndingCall = false;
+  bool _isEndCallScheduled = false;
+
   @override
   void dispose() {
-    // Cleanup resources
-    _callManager?.dispose();
-    _client?.close();
+    _sdk?.dispose();
     _apiKeyController.dispose();
     _secretKeyController.dispose();
     _usernameController.dispose();
@@ -59,91 +85,116 @@ class _CallExamplePageState extends State<CallExamplePage> {
     super.dispose();
   }
 
-  /// Initialize the SDK and connect to the server
-  Future<void> _initialize() async {
-    setState(() => _status = 'Initializing...');
+  /// Create the NexaconSDK instance and wire up all callbacks.
+  /// Call this once on app start — the same instance is reused for every
+  /// subsequent call because endCall() resets internal state automatically.
+  void _createSdk() {
+    _sdk = NexaconSDK(
+      apiKey: _apiKeyController.text,
+      secretKey: _secretKeyController.text,
+    );
 
-    try {
-      // Step 1: Create the NexaconClient
-      _client = NexaconClient(
-        apiKey: _apiKeyController.text,
-        secretKey: _secretKeyController.text,
-      );
+    _sdk!.onCallStateChanged = (state) {
+      setState(() {
+        _callState = state.toString();
+        if (state == CallState.connected) _updateCallDuration();
+      });
+    };
 
-      // Step 2: Generate NX token for authentication
-      final nxResponse = await _client!.auth.getNxToken(
-        username: _usernameController.text,
-      );
+    _sdk!.onIncomingCall = (callerName) {
+      setState(() => _status = 'Incoming call from: $callerName');
+      _showIncomingCallDialog(callerName);
+    };
 
-      final nxtoken = nxResponse['token'];
-      final nxid = nxResponse['jid'];
-      final wsUrl = nxResponse['nxws'];
+    _sdk!.onCallEnded = (reason) {
+      setState(() {
+        _status = 'Call ended: $reason';
+        _callDuration = Duration.zero;
+        _callState = 'idle';
+        _isEndingCall = false;
+        _isOtherUserConnected = false;
+      });
+    };
 
-      // Step 3: IMPORTANT - Set the token on the client for API authentication
-      // This is required to avoid 403 errors when making API calls
-      _client!.setToken(nxtoken);
+    _sdk!.onOtherUserJoined = () {
+      setState(() {
+        _isOtherUserConnected = true;
+        _status = 'Connected';
+      });
+    };
 
-      // Step 4: Create CallManager with callbacks
-      _callManager = await _client!.createCallManager(
-        nxtoken: nxtoken,
-        nxid: nxid,
-        wsUrl: wsUrl,
-        name: 'Example User',
-        onCallStateChanged: (state) {
-          setState(() {
-            _callState = state.toString();
-            // Update call duration when connected
-            if (state == CallState.connected) {
-              _updateCallDuration();
-            }
-          });
-        },
-        onIncomingCall: (callerName) {
-          setState(() => _status = 'Incoming call from: $callerName');
-          _showIncomingCallDialog(callerName);
-        },
-        onCallEnded: (reason) {
-          setState(() {
-            _status = 'Call ended: $reason';
-            _callDuration = Duration.zero;
-          });
-        },
-        onError: (error) {
-          setState(() => _status = 'Error: $error');
-        },
-      );
+    _sdk!.onOtherUserLeft = () {
+      // IMPORTANT: Only end the call if the peer actually connected via WebRTC.
+      // Without this guard, stale XMPP signals from a previous call session
+      // can trigger onOtherUserLeft on a brand-new call before the peer joins,
+      // causing it to auto-end immediately after acceptance.
+      if (!_isOtherUserConnected) {
+        print('⚠️ onOtherUserLeft: peer never joined — ignoring');
+        return;
+      }
 
-      setState(() => _status = 'Connected and ready');
-    } catch (e) {
-      setState(() => _status = 'Error: $e');
-    }
+      if (_isEndCallScheduled) return;
+      _isEndCallScheduled = true;
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (!_isEndingCall) _endCall();
+        _isEndCallScheduled = false;
+      });
+    };
+
+    _sdk!.onError = (error) {
+      setState(() => _status = 'Error: $error');
+    };
   }
 
-  /// Initiate an outgoing call to the recipient
-  Future<void> _initiateCall() async {
-    if (_callManager == null) {
-      setState(() => _status = 'Please initialize first');
-      return;
-    }
+  /// Reset per-call UI state flags before every new call.
+  /// IMPORTANT: Always call this before startCall / acceptFromNotification
+  /// so flags from the previous call do not carry over.
+  void _resetCallState() {
+    setState(() {
+      _isEndingCall = false;
+      _isEndCallScheduled = false;
+      _isOtherUserConnected = false;
+      _callDuration = Duration.zero;
+      _callState = 'idle';
+    });
+  }
 
+  /// Initiate an outgoing call.
+  /// NexaconSDK handles token auth, XMPP connection, and WebRTC internally.
+  Future<void> _initiateCall() async {
+    if (_sdk == null) _createSdk();
+    _resetCallState();
+
+    setState(() => _status = 'Calling...');
     try {
-      await _callManager!.initiateCall(
-        to: _recipientController.text,
+      await _sdk!.startCall(
+        to: _recipientController.text, // Format: +<country_code><number>
+        username: _usernameController.text,
+        name: 'Example User',
         audio: true,
         video: _isVideoEnabled,
       );
-      setState(() => _status = 'Call initiated');
+      setState(() => _status = 'Ringing — waiting for answer');
     } catch (e) {
       setState(() => _status = 'Error: $e');
     }
   }
 
-  /// Accept an incoming call
-  Future<void> _acceptCall() async {
-    if (_callManager == null) return;
+  /// Accept an incoming call that arrived via FCM push notification.
+  Future<void> _acceptCallFromNotification({
+    required String roomId,
+    required String callerNxId,
+  }) async {
+    if (_sdk == null) _createSdk();
+    _resetCallState();
 
+    setState(() => _status = 'Accepting call...');
     try {
-      await _callManager!.acceptCall(
+      await _sdk!.acceptFromNotification(
+        username: _usernameController.text,
+        roomId: roomId,
+        callerNxId: callerNxId, // caller's phone / NX ID from FCM payload
+        name: 'Example User',
         audio: true,
         video: _isVideoEnabled,
       );
@@ -153,73 +204,83 @@ class _CallExamplePageState extends State<CallExamplePage> {
     }
   }
 
-  /// Reject an incoming call
+  /// Accept an incoming call received while the app is in the foreground.
+  Future<void> _acceptCall() async {
+    if (_sdk == null) return;
+    _resetCallState();
+
+    try {
+      await _sdk!.acceptCall(audio: true, video: _isVideoEnabled);
+      setState(() => _status = 'Call accepted');
+    } catch (e) {
+      setState(() => _status = 'Error: $e');
+    }
+  }
+
+  /// Reject an incoming call.
   void _rejectCall() {
-    if (_callManager == null) return;
-    _callManager!.rejectCall();
+    _sdk?.rejectCall();
     setState(() => _status = 'Call rejected');
   }
 
-  /// End the current call
+  /// End the current call.
+  /// After this, NexaconSDK resets internal state — the same _sdk instance
+  /// is ready for the next consecutive call without any manual cleanup.
   Future<void> _endCall() async {
-    if (_callManager == null) return;
+    if (_sdk == null) return;
+    if (_isEndingCall) return;
+    _isEndingCall = true;
 
     try {
-      await _callManager!.endCall();
+      await _sdk!.endCall();
       setState(() {
         _status = 'Call ended';
         _callDuration = Duration.zero;
       });
     } catch (e) {
       setState(() => _status = 'Error: $e');
+      _isEndingCall = false;
     }
   }
 
-  /// Toggle microphone mute state
   void _toggleMute() {
-    if (_callManager == null) return;
+    if (_sdk == null) return;
     setState(() {
       _isMuted = !_isMuted;
-      _callManager!.webrtcService?.toggleAudio(!_isMuted);
+      _sdk!.toggleMute(_isMuted);
     });
   }
 
-  /// Toggle speaker state
   void _toggleSpeaker() {
-    if (_callManager == null) return;
+    if (_sdk == null) return;
     setState(() {
       _isSpeakerOn = !_isSpeakerOn;
-      _callManager!.webrtcService?.toggleSpeaker(_isSpeakerOn);
+      _sdk!.toggleSpeaker(_isSpeakerOn);
     });
   }
 
-  /// Toggle video state
   void _toggleVideo() {
-    if (_callManager == null) return;
+    if (_sdk == null) return;
     setState(() {
       _isVideoEnabled = !_isVideoEnabled;
-      _callManager!.webrtcService?.toggleVideo(_isVideoEnabled);
+      _sdk!.toggleVideo(_isVideoEnabled);
     });
   }
 
-  /// Switch between front and back camera
   Future<void> _switchCamera() async {
-    if (_callManager == null) return;
     try {
-      await _callManager!.webrtcService?.switchCamera();
+      await _sdk?.switchCamera();
     } catch (e) {
       setState(() => _status = 'Error switching camera: $e');
     }
   }
 
-  /// Update call duration every second when connected
+  /// Refresh call duration label every second while connected.
   void _updateCallDuration() {
     if (_callState == 'CallState.connected') {
       Future.delayed(const Duration(seconds: 1), () {
-        if (mounted && _callManager != null) {
-          setState(() {
-            _callDuration = _callManager!.callDuration;
-          });
+        if (mounted && _sdk != null) {
+          setState(() => _callDuration = _sdk!.callDuration);
           _updateCallDuration();
         }
       });
@@ -311,10 +372,13 @@ class _CallExamplePageState extends State<CallExamplePage> {
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _initialize,
-                      child: const Text('Initialize'),
+                    const SizedBox(height: 8),
+                    Text(
+                      'SDK is initialized automatically on first call.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                   ],
                 ),

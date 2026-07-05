@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'core/client.dart';
 import 'calls/call_manager.dart';
+import 'core/xmpp_manager.dart';
 
 /// Simplified high-level API for Nexacon SDK
 /// Handles all complexity internally - just 3 steps to make a call
@@ -11,6 +12,14 @@ class NexaconSDK {
 
   NexaconClient? _client;
   CallManager? _callManager;
+  XmppManager? _xmppManager;
+
+  /// Get the underlying NexaconClient for advanced use cases
+  /// (e.g., messaging, presence, rooms)
+  NexaconClient? get client => _client;
+
+  /// Get the NX manager for direct messaging access
+  XmppManager? get xmppManager => _xmppManager;
 
   // Callbacks
   Function(CallState)? onCallStateChanged;
@@ -36,12 +45,21 @@ class NexaconSDK {
   /// Initialize SDK connection without starting a call.
   /// Use this for incoming calls: call [initialize] then [acceptCall].
   /// For outgoing calls, use [startCall] directly.
+  /// This also establishes NX connection for messaging.
   ///
   /// [username] Your username/phone number
   /// [name] Your display name (optional)
-  Future<void> initialize({
+  /// [nxtoken] Optional - NX token if already fetched (avoids API call)
+  /// [nxid] Optional - NX JID if already fetched
+  /// [wsUrl] Optional - WebSocket URL if already fetched
+  ///
+  /// Returns the NX credentials (token, jid, wsUrl) that were used
+  Future<Map<String, dynamic>> initialize({
     required String username,
     String? name,
+    String? nxtoken,
+    String? nxid,
+    String? wsUrl,
   }) async {
     try {
       _client = NexaconClient(
@@ -50,17 +68,49 @@ class NexaconSDK {
         baseUrl: _baseUrl,
       );
 
-      final nxResponse = await _client!.auth.getNxToken(username: username);
-      final nxtoken = nxResponse['token'];
-      final nxid = nxResponse['jid'];
-      String wsUrl = nxResponse['nxws'];
+      // Use provided credentials or fetch from API
+      if (nxtoken == null || nxid == null || wsUrl == null) {
+        print('🔐 Fetching NX token from API...');
+        final nxResponse = await _client!.auth.getNxToken(username: username);
+        nxtoken = nxResponse['token'];
+        nxid = nxResponse['jid'];
+        wsUrl = nxResponse['nxws'];
+        print('✅ NX token fetched successfully');
+      } else {
+        print('✅ Using provided NX credentials (skipping API call)');
+      }
+
+      // Ensure wsUrl is not null
+      if (wsUrl == null) {
+        throw Exception('WebSocket URL is null');
+      }
 
       if (wsUrl.startsWith('https://')) {
         wsUrl = wsUrl.replaceFirst('https://', 'wss://');
       }
 
+      // Ensure nxtoken and nxid are not null
+      if (nxtoken == null || nxid == null) {
+        throw Exception('NX token or JID is null');
+      }
+
       _client!.setToken(nxtoken);
 
+      // Establish NX connection for messaging
+      _xmppManager = _client!.nxManager;
+      final nxConnected = await _xmppManager!.connect(
+        jid: nxid,
+        password: nxtoken,
+        wsUrl: wsUrl,
+      );
+
+      if (!nxConnected) {
+        throw Exception('Failed to establish NX connection');
+      }
+
+      print('✅ NX connection established for messaging');
+
+      // Create CallManager for calls
       _callManager = await _client!.createCallManager(
         nxtoken: nxtoken,
         nxid: nxid,
@@ -85,6 +135,13 @@ class NexaconSDK {
           onRemoteStream?.call();
         },
       );
+
+      // Return the credentials used
+      return {
+        'token': nxtoken,
+        'jid': nxid,
+        'nxws': wsUrl,
+      };
     } catch (e) {
       onError?.call('Failed to initialize: $e');
       rethrow;
@@ -104,6 +161,7 @@ class NexaconSDK {
     String? name,
     bool audio = true,
     bool video = false,
+    String? roomId,
   }) async {
     try {
       // Reuse pre-warmed connection if available to avoid duplicate XMPP sessions
@@ -115,6 +173,7 @@ class NexaconSDK {
         to: to,
         audio: audio,
         video: video,
+        roomId: roomId,
       );
     } catch (e) {
       onError?.call('Failed to start call: $e');
@@ -233,7 +292,13 @@ class NexaconSDK {
   }) async {
     try {
       print('📲 Accepting call from push notification: room=$roomId');
-      await initialize(username: username, name: name);
+      // Reuse pre-warmed connection if already connected — do NOT call initialize()
+      // again as it creates a duplicate NX session and drops signaling messages.
+      if (_callManager == null) {
+        await initialize(username: username, name: name);
+      } else {
+        print('♻️ Reusing existing NX connection for acceptFromNotification');
+      }
 
       // Inject call state directly — no need to wait for NX signal
       _callManager!.prepareIncomingCall(
@@ -258,6 +323,11 @@ class NexaconSDK {
     _callManager!.rejectCall();
   }
 
+  /// Notify caller that the remote party accepted (FCM/backend fallback).
+  void notifyRemoteAccepted() {
+    _callManager?.notifyRemoteAccepted();
+  }
+
   /// End the current call
   Future<void> endCall() async {
     if (_callManager == null) return;
@@ -266,6 +336,11 @@ class NexaconSDK {
       await _callManager!.endCall();
     } catch (e) {
       onError?.call('Failed to end call: $e');
+    } finally {
+      // Null out CallManager so next call always gets a fresh instance.
+      // This prevents stale state from a previous call causing the second call
+      // to fail or auto-end immediately after being accepted.
+      _callManager = null;
     }
   }
 
