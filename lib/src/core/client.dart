@@ -154,6 +154,8 @@ class NexaconClient {
     Function(String)? onError,
     Function(dynamic)? onLocalStream,
     Function(dynamic)? onRemoteStream,
+    Function()? onOtherUserJoined,
+    Function()? onOtherUserLeft,
   }) async {
     final callManager = CallManager(
       this,
@@ -164,6 +166,8 @@ class NexaconClient {
       onError: onError,
       onLocalStream: onLocalStream,
       onRemoteStream: onRemoteStream,
+      onOtherUserJoined: onOtherUserJoined,
+      onOtherUserLeft: onOtherUserLeft,
     );
 
     // Auto-initialize connection if credentials provided

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.6] - 2026-07-05
+
+### Added
+
+- `onOtherUserJoined` callback to NexaconSDK — fires when remote peer's WebRTC stream arrives
+- `onOtherUserLeft` callback to NexaconSDK — fires when call ends
+- These callbacks allow apps to track actual peer connection state for UI guards against stale signals
+
+## [1.3.5] - 2026-07-05
+
+### Changed
+
+- Replaced all XMPP references with NX in README.md and documentation
+- Updated doc/index.rst, doc/messaging.rst, and doc/api.rst to use NX terminology
+- `refreshXMPPToken()` → `refreshNxToken()` in API documentation
+
 ## [1.2.8] - 2026-06-28
 
 ### Fixed
@@ -20,6 +36,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `NxJidUtils` — shared JID formatting aligned with nxchat `NxsmService._formatJid`
 - `roomId` parameter on `initiateCall()` / `startCall()` so host apps can pass backend channel names
 - `notifyRemoteAccepted()` — FCM/backend fallback to unblock caller when XMPP response is delayed
+
+## [1.3.6] - 2026-07-05
+
+### Added
+
+- `onOtherUserJoined` callback to NexaconSDK — fires when remote peer's WebRTC stream arrives
+- `onOtherUserLeft` callback to NexaconSDK — fires when call ends
+- These callbacks allow apps to track actual peer connection state for UI guards against stale signals
 
 ## [1.2.7] - 2026-06-28
 

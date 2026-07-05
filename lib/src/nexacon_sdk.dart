@@ -28,6 +28,8 @@ class NexaconSDK {
   Function(String)? onError;
   Function()? onLocalStream;
   Function()? onRemoteStream;
+  Function()? onOtherUserJoined;
+  Function()? onOtherUserLeft;
 
   /// Create NexaconSDK instance
   ///
@@ -133,6 +135,12 @@ class NexaconSDK {
         },
         onRemoteStream: (stream) {
           onRemoteStream?.call();
+        },
+        onOtherUserJoined: () {
+          onOtherUserJoined?.call();
+        },
+        onOtherUserLeft: () {
+          onOtherUserLeft?.call();
         },
       );
 

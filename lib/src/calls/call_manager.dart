@@ -35,6 +35,8 @@ class CallManager {
   final Function(String)? onError;
   final Function(MediaStream)? onLocalStream;
   final Function(MediaStream)? onRemoteStream;
+  final Function()? onOtherUserJoined;
+  final Function()? onOtherUserLeft;
 
   CallManager(
     this._client,
@@ -45,6 +47,8 @@ class CallManager {
     this.onError,
     this.onLocalStream,
     this.onRemoteStream,
+    this.onOtherUserJoined,
+    this.onOtherUserLeft,
   });
 
   /// Initialize the call manager with NX credentials
@@ -97,7 +101,11 @@ class CallManager {
     // Initialize WebRTC service
     _webrtcService = WebRTCService(
       onLocalStream: onLocalStream,
-      onRemoteStream: onRemoteStream,
+      onRemoteStream: (stream) {
+        // Remote peer joined WebRTC
+        onOtherUserJoined?.call();
+        onRemoteStream?.call(stream);
+      },
       onIceCandidate: (candidate) {
         // Send ICE candidate via signaling
         if (_currentRoomId != null) {
@@ -574,6 +582,7 @@ class CallManager {
 
     _webrtcService?.endCall();
     _setCallState(CallState.ended);
+    onOtherUserLeft?.call();
     onCallEnded?.call(reason);
 
     // Auto-record call analytics
