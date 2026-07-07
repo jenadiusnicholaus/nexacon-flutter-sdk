@@ -1,5 +1,6 @@
 import '../core/client.dart';
 import '../core/exceptions.dart';
+import 'models.dart';
 
 /// Messaging Service
 class Messaging {
@@ -17,11 +18,11 @@ class Messaging {
       throw ValidationException('Recipient and message are required');
     }
 
-    return _client.request('POST', '/nx/message/', data: {
-      'to': to,
-      'message': message,
-      'type': messageType,
-    });
+    return _client.request(
+      'POST',
+      '/nx/message/',
+      data: {'to': to, 'message': message, 'type': messageType},
+    );
   }
 
   /// Broadcast a message to multiple recipients
@@ -33,10 +34,11 @@ class Messaging {
       throw ValidationException('Message and recipients are required');
     }
 
-    return _client.request('POST', '/nx/broadcast/', data: {
-      'message': message,
-      'recipients': recipients,
-    });
+    return _client.request(
+      'POST',
+      '/nx/broadcast/',
+      data: {'message': message, 'recipients': recipients},
+    );
   }
 
   /// Get user's contact list
@@ -46,12 +48,17 @@ class Messaging {
   }
 
   /// Add a user to contacts
-  Future<Map<String, dynamic>> addContact(String nxid) async {
+  Future<Map<String, dynamic>> addContact(String nxid, {String? name}) async {
     if (nxid.isEmpty) {
       throw ValidationException('nxid is required');
     }
 
-    return _client.request('POST', '/nx/contacts/', data: {'nxid': nxid});
+    final data = <String, dynamic>{'nxid': nxid};
+    if (name != null && name.isNotEmpty) {
+      data['name'] = name;
+    }
+
+    return _client.request('POST', '/nx/contacts/', data: data);
   }
 
   /// Remove a user from contacts
@@ -64,19 +71,17 @@ class Messaging {
   }
 
   /// Get message history for the current user
-  /// Supports filtering by date range, sender, and message type
-  Future<Map<String, dynamic>> getMessageHistory({
+  /// Supports filtering by date range, sender, peer, and message type
+  Future<MessageHistoryResponse> getMessageHistory({
     DateTime? startDate,
     DateTime? endDate,
     String? sender,
+    String? peer,
     String? messageType,
     int page = 1,
     int pageSize = 20,
   }) async {
-    final params = <String, dynamic>{
-      'page': page,
-      'page_size': pageSize,
-    };
+    final params = <String, dynamic>{'page': page, 'limit': pageSize};
 
     if (startDate != null) {
       params['start_date'] =
@@ -89,10 +94,43 @@ class Messaging {
     if (sender != null && sender.isNotEmpty) {
       params['sender'] = sender;
     }
+    if (peer != null && peer.isNotEmpty) {
+      params['peer'] = peer;
+    }
     if (messageType != null && messageType.isNotEmpty) {
       params['message_type'] = messageType;
     }
 
-    return _client.request('GET', '/nx/history/', params: params);
+    print('📨 SDK getMessageHistory params: $params');
+
+    try {
+      final response =
+          await _client.request('GET', '/nx/history/', params: params);
+
+      // Debug: log what the API actually returns
+      print('📨 SDK getMessageHistory raw response: $response');
+      print('📨 SDK getMessageHistory response type: ${response.runtimeType}');
+
+      // Defensive: ensure response is a Map before parsing
+      if (response is! Map<String, dynamic>) {
+        print(
+            '⚠️ SDK getMessageHistory: response is not a Map (${response.runtimeType}), returning empty response');
+        return MessageHistoryResponse(
+          status: 'error',
+          total: 0,
+          limit: pageSize,
+          offset: 0,
+          hasNext: false,
+          hasPrev: false,
+          messages: [],
+        );
+      }
+
+      return MessageHistoryResponse.fromJson(response);
+    } catch (e) {
+      print('❌ SDK getMessageHistory error: $e');
+      print('❌ Error type: ${e.runtimeType}');
+      rethrow;
+    }
   }
 }

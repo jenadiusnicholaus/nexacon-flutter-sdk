@@ -5,6 +5,7 @@ export 'src/core/exceptions.dart';
 export 'src/core/client.dart';
 export 'src/auth/auth.dart';
 export 'src/messaging/messaging.dart';
+export 'src/messaging/models.dart';
 export 'src/messaging/messaging_manager.dart';
 export 'src/calls/calls.dart';
 export 'src/calls/call_manager.dart';

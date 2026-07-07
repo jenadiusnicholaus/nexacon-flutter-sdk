@@ -53,7 +53,18 @@ class NexaconClient {
     Map<String, dynamic>? params,
     Map<String, String>? headers,
   }) async {
-    final url = Uri.parse('$baseUrl$endpoint').replace(queryParameters: params);
+    print('📨 Client request: $method $endpoint');
+    print('📨 Client params: $params');
+    print('📨 Client params type: ${params.runtimeType}');
+
+    // Convert params to Map<String, String> for queryParameters
+    final stringParams =
+        params?.map((key, value) => MapEntry(key, value?.toString()));
+    print('📨 Client stringParams: $stringParams');
+
+    final url =
+        Uri.parse('$baseUrl$endpoint').replace(queryParameters: stringParams);
+    print('📨 Client URL: $url');
 
     final requestHeaders = <String, String>{
       'Content-Type': 'application/json',
@@ -61,8 +72,14 @@ class NexaconClient {
       'X-Secret-Key': secretKey,
     };
 
+    print('📨 Client API Key: ${apiKey.substring(0, 10)}...');
+    print('📨 Client Secret Key: ${secretKey.substring(0, 10)}...');
+
     if (_nxToken != null) {
       requestHeaders['X-NX-Token'] = _nxToken!;
+      print('📨 Client using NX token: ${_nxToken!.substring(0, 20)}...');
+    } else {
+      print('⚠️ Client: No NX token set!');
     }
 
     if (headers != null) {
@@ -71,11 +88,13 @@ class NexaconClient {
 
     http.Response response;
     try {
+      print('📨 Client about to make HTTP request...');
       switch (method.toUpperCase()) {
         case 'GET':
           response = await _httpClient
               .get(url, headers: requestHeaders)
               .timeout(timeout);
+          print('📨 Client HTTP GET response received');
           break;
         case 'POST':
           response = await _httpClient
@@ -110,6 +129,8 @@ class NexaconClient {
     } else if (response.statusCode == 429) {
       throw RateLimitException('Rate limit exceeded');
     } else if (response.statusCode >= 400) {
+      print('⚠️ Client error response status: ${response.statusCode}');
+      print('⚠️ Client error response body: ${response.body}');
       try {
         final errorData = json.decode(response.body);
         throw APIException(
@@ -125,7 +146,12 @@ class NexaconClient {
       }
     }
 
-    return json.decode(response.body);
+    final decoded = json.decode(response.body);
+    print('📨 Client request decoded response type: ${decoded.runtimeType}');
+    if (decoded is Map) {
+      print('📨 Client request decoded keys: ${decoded.keys.toList()}');
+    }
+    return decoded;
   }
 
   void setToken(String token) {
