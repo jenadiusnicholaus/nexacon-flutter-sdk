@@ -125,11 +125,18 @@ class NexaconMessage {
     };
   }
 
-  /// Check if message body contains call-related JSON
+  /// Check if message body contains call-related content
   bool get isCallMessage {
     try {
+      // Check for "Incoming p2p call" link format
+      if (body.contains('Incoming p2p call') ||
+          body.contains('Click to join:') ||
+          body.contains('custom-call-interfaces')) {
+        return true;
+      }
+
+      // Check for JSON call messages
       if (body.startsWith('{') && body.endsWith('}')) {
-        // Simple check for call-related keys
         return body.contains('call_') ||
             body.contains('callType') ||
             body.contains('roomId');
@@ -143,8 +150,17 @@ class NexaconMessage {
   /// Extract call type if this is a call message
   String? get callType {
     if (!isCallMessage) return null;
+
+    // Check for link-based call invitation
+    if (body.contains('Incoming p2p call')) {
+      if (body.contains('type=audio')) return 'audio_invitation';
+      if (body.contains('type=video')) return 'video_invitation';
+      return 'invitation';
+    }
+
+    // Check for JSON-based call events
     if (body.contains('call_invitation')) return 'invitation';
-    if (body.contains('call_end')) return 'end';
+    if (body.contains('call_end') || body.contains('Call ended')) return 'end';
     if (body.contains('call_response')) return 'response';
     if (body.contains('webrtc_offer')) return 'offer';
     if (body.contains('webrtc_ice_candidate')) return 'ice_candidate';
@@ -156,6 +172,10 @@ class NexaconMessage {
     if (isCallMessage) {
       final type = callType;
       switch (type) {
+        case 'audio_invitation':
+          return '📞 Audio call invitation';
+        case 'video_invitation':
+          return '📹 Video call invitation';
         case 'invitation':
           return '📞 Call invitation';
         case 'end':

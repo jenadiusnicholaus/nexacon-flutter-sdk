@@ -71,7 +71,17 @@ class Messaging {
   }
 
   /// Get message history for the current user
-  /// Supports filtering by date range, sender, peer, and message type
+  ///
+  /// Enhanced API features:
+  /// - Automatically resolves user identifiers (username, phone, JID)
+  /// - Supports with/without + prefix (e.g., 255788811169 or +255788811169)
+  /// - Returns ALL messages between you and peer (sent OR received)
+  /// - If no peer specified, returns ALL your messages
+  ///
+  /// Examples:
+  /// - Get conversation with peer: getMessageHistory(peer: '255788811169')
+  /// - Get conversation with peer: getMessageHistory(peer: '+255788811169')
+  /// - Get all your messages: getMessageHistory()
   Future<MessageHistoryResponse> getMessageHistory({
     DateTime? startDate,
     DateTime? endDate,
@@ -94,6 +104,11 @@ class Messaging {
     if (sender != null && sender.isNotEmpty) {
       params['sender'] = sender;
     }
+    // Enhanced peer resolution: API now handles all variants
+    // - Bare username (e.g., +255788811189)
+    // - With/without + prefix (e.g., 255788811189 and +255788811189)
+    // - Full JID (e.g., +255788811189@nxservice.quantumvision-tech.com)
+    // - Username or phone lookup in database
     if (peer != null && peer.isNotEmpty) {
       params['peer'] = peer;
     }
@@ -104,27 +119,15 @@ class Messaging {
     print('📨 SDK getMessageHistory params: $params');
 
     try {
-      final response =
-          await _client.request('GET', '/nx/history/', params: params);
+      final response = await _client.request(
+        'GET',
+        '/nx/history/',
+        params: params,
+      );
 
       // Debug: log what the API actually returns
       print('📨 SDK getMessageHistory raw response: $response');
       print('📨 SDK getMessageHistory response type: ${response.runtimeType}');
-
-      // Defensive: ensure response is a Map before parsing
-      if (response is! Map<String, dynamic>) {
-        print(
-            '⚠️ SDK getMessageHistory: response is not a Map (${response.runtimeType}), returning empty response');
-        return MessageHistoryResponse(
-          status: 'error',
-          total: 0,
-          limit: pageSize,
-          offset: 0,
-          hasNext: false,
-          hasPrev: false,
-          messages: [],
-        );
-      }
 
       return MessageHistoryResponse.fromJson(response);
     } catch (e) {
