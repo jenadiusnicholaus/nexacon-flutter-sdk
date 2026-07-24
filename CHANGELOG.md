@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.8] - 2026-07-24
+
+### Fixed
+
+- `Calls.recordCall` now gracefully handles 404 and other failures from the `/nx/call-analytics/` endpoint so call flows are not interrupted when analytics is not implemented on the backend.
+
+### Changed
+
+- `Messaging.getMessageHistory` returns typed `MessageHistoryResponse` and supports enhanced peer resolution for message history queries.
+
 ## [1.3.7] - 2026-07-07
 
 ### Added
