@@ -50,7 +50,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  nexacon_sdk: ^1.3.4
+  nexacon_sdk: ^1.3.9
 ```
 
 Install:
@@ -399,24 +399,28 @@ NexaconSDK({required String apiKey, required String secretKey, String? baseUrl})
 | `acceptCall({audio, video})`                                                                      | Accept an incoming call (must be in `incoming` state)          |
 | `rejectCall()`                                                                                    | Reject an incoming call                                        |
 | `endCall()`                                                                                       | End the current call                                           |
+| `notifyRemoteAccepted()`                                                                          | Notify SDK that remote accepted (FCM fallback)                 |
 | `toggleMute(bool muted)`                                                                          | Toggle microphone                                              |
 | `toggleSpeaker(bool enabled)`                                                                     | Toggle speaker                                                 |
 | `toggleVideo(bool enabled)`                                                                       | Toggle video                                                   |
 | `switchCamera()`                                                                                  | Switch front/back camera                                       |
 | `dispose()`                                                                                       | Cleanup all resources                                          |
 
-| Property       | Type       | Description           |
-| -------------- | ---------- | --------------------- |
-| `callDuration` | `Duration` | Current call duration |
+| Property       | Type             | Description                                        |
+| -------------- | ---------------- | -------------------------------------------------- |
+| `callDuration` | `Duration`       | Current call duration                              |
+| `client`       | `NexaconClient?` | Underlying client for advanced use (devices, etc.) |
 
-| Callback             | Signature             | Description               |
-| -------------------- | --------------------- | ------------------------- |
-| `onCallStateChanged` | `Function(CallState)` | Call state updates        |
-| `onIncomingCall`     | `Function(String)`    | Incoming call received    |
-| `onCallEnded`        | `Function(String)`    | Call ended with reason    |
-| `onError`            | `Function(String)`    | Error occurred            |
-| `onLocalStream`      | `Function()`          | Local video stream ready  |
-| `onRemoteStream`     | `Function()`          | Remote video stream ready |
+| Callback             | Signature             | Description                 |
+| -------------------- | --------------------- | --------------------------- |
+| `onCallStateChanged` | `Function(CallState)` | Call state updates          |
+| `onIncomingCall`     | `Function(String)`    | Incoming call received      |
+| `onCallEnded`        | `Function(String)`    | Call ended with reason      |
+| `onError`            | `Function(String)`    | Error occurred              |
+| `onLocalStream`      | `Function()`          | Local video stream ready    |
+| `onRemoteStream`     | `Function()`          | Remote video stream ready   |
+| `onOtherUserJoined`  | `Function()`          | Remote peer joined the call |
+| `onOtherUserLeft`    | `Function()`          | Remote peer left the call   |
 
 ---
 
