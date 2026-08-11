@@ -47,15 +47,11 @@ class NexaconSDK {
   /// Initialize SDK connection without starting a call.
   /// Use this for incoming calls: call [initialize] then [acceptCall].
   /// For outgoing calls, use [startCall] directly.
-  /// This also establishes NX connection for messaging.
   ///
   /// [username] Your username/phone number
   /// [name] Your display name (optional)
-  /// [nxtoken] Optional - NX token if already fetched (avoids API call)
-  /// [nxid] Optional - NX JID if already fetched
-  /// [wsUrl] Optional - WebSocket URL if already fetched
   ///
-  /// Returns the NX credentials (token, jid, wsUrl) that were used
+  /// Returns the NX credentials that were used
   Future<Map<String, dynamic>> initialize({
     required String username,
     String? name,

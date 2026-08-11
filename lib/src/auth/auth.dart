@@ -7,12 +7,11 @@ class Auth {
 
   Auth(this._client);
 
-  /// Get NX token for ejabberd authentication (used for messaging and call signaling)
+  /// Get NX token for authentication (used for messaging and call signaling)
   ///
   /// Returns a Map containing:
   /// - token: The NX authentication token
   /// - jid: The user's NX network ID
-  /// - nxws: The WebSocket URL for NX connection
   ///
   /// Throws [ValidationException] if username is empty
   /// Throws [APIException] if the request fails

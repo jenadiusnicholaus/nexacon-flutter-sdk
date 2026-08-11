@@ -24,7 +24,6 @@ For full peer-to-peer calling (audio/video), use the built-in ``CallManager``. I
     );
     final nxtoken = nxResponse['token'];
     final nxid = nxResponse['jid'];
-    final wsUrl = nxResponse['nxws'];
 
 **Step 2: Create CallManager**
 
@@ -33,7 +32,6 @@ For full peer-to-peer calling (audio/video), use the built-in ``CallManager``. I
     final callManager = await client.createCallManager(
       nxtoken: nxtoken,
       nxid: nxid,
-      wsUrl: wsUrl,
       name: 'Your Name',
       onCallStateChanged: (state) {
         // Handle call state changes

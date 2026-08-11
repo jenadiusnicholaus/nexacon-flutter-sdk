@@ -51,7 +51,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  nexacon_calls: ^1.3.13
+  nexacon_calls: ^1.3.14
 ```
 
 Install:
@@ -465,7 +465,6 @@ final nxResponse = await client.auth.getNxToken(username: '+255788811191');
 
 final nxtoken = nxResponse['token'];
 final nxid    = nxResponse['jid'];
-final wsUrl   = nxResponse['nxws'];
 
 // IMPORTANT: Required to avoid 403 errors on subsequent API calls
 client.setToken(nxtoken);
@@ -477,7 +476,6 @@ client.setToken(nxtoken);
 final callManager = await client.createCallManager(
   nxtoken: nxtoken,
   nxid: nxid,
-  wsUrl: wsUrl,
   name: 'Your Display Name',
   onCallStateChanged: (state) {
     if (state == CallState.connected) print('✅ Connected');

@@ -75,7 +75,6 @@ For peer-to-peer audio/video calls, use CallManager:
     final callManager = await client.createCallManager(
       nxtoken: nxResponse['token'],
       nxid: nxResponse['jid'],
-      wsUrl: nxResponse['nxws'],
       onCallStateChanged: (state) => print('State: $state'),
       onIncomingCall: (caller) => print('Incoming from: $caller'),
     );

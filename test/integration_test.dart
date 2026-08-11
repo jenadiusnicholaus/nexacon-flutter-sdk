@@ -15,7 +15,7 @@ void main() {
       // Expected flow:
       // 1. Client makes POST request to /nexacon-auth/nxm-token/
       // 2. Request body: {username: '+255788811191', host: 'nxservice.quantumvision-tech.com'}
-      // 3. Response: {token: 'nx_token', jid: 'user@domain', nxws: 'wss://...'}
+      // 3. Response: {token: 'nx_token', jid: 'user@domain'}
       // 4. These values are used to initialize CallManager
 
       // Manual test:
@@ -23,7 +23,6 @@ void main() {
       // final response = await client.auth.getNxToken(username: '+255788811191');
       // expect(response.containsKey('token'), true);
       // expect(response.containsKey('jid'), true);
-      // expect(response.containsKey('nxws'), true);
 
       expect(true, isTrue); // Documentation placeholder
     });
@@ -218,7 +217,6 @@ void main() {
       // final callManager = await client.createCallManager(
       //   nxtoken: nxResponse['token'],
       //   nxid: nxResponse['jid'],
-      //   wsUrl: nxResponse['nxws'],
       // );
       // await callManager.initiateCall(to: '+255788811192', audio: true, video: false);
       // // ... wait for connection
