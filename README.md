@@ -50,7 +50,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  nexacon_calls: ^1.3.9
+  nexacon_calls: ^1.3.10
 ```
 
 Install:
