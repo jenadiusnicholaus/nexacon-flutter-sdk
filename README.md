@@ -2,7 +2,7 @@
 
 [![pub.dev](https://img.shields.io/pub/v/nexacon_calls.svg)](https://pub.dev/packages/nexacon_calls)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Platform](https://img.shields.io/badge/platform-android%20%7C%20ios%20%7C%20web%20%7C%20linux%20%7C%20macos%20%7C%20windows-blue)](https://pub.dev/packages/nexacon_calls)
+[![Platform](https://img.shields.io/badge/platform-android%20%7C%20ios%20%7C%20linux%20%7C%20macos%20%7C%20windows-blue)](https://pub.dev/packages/nexacon_calls)
 
 A Flutter SDK for Nexacon API — plug-and-play P2P audio/video calling with WebRTC and NX signaling.
 
@@ -40,7 +40,7 @@ A Flutter SDK for Nexacon API — plug-and-play P2P audio/video calling with Web
 - **Automatic Reconnection**: Built-in connection management with exponential backoff
 - **ICE Management**: Automatic ICE candidate buffering and exchange
 - **Foldable Device Support**: Detect fold state changes on Android devices
-- **Cross-Platform**: Android, iOS, Web, Linux, macOS, Windows
+- **Cross-Platform**: Android, iOS, Linux, macOS, Windows
 - **Professional Logging**: Emoji-based console logging for easy debugging
 
 ---
@@ -51,7 +51,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  nexacon_calls: ^1.3.12
+  nexacon_calls: ^1.3.13
 ```
 
 Install:
@@ -70,7 +70,6 @@ flutter pub get
 | iOS      | 12.0                 | Requires camera/audio permissions  |
 | Linux    | Any                  | Works out of the box               |
 | macOS    | 10.14                | Requires camera/audio entitlements |
-| Web      | Modern browsers      | Requires WebRTC support            |
 | Windows  | Any                  | Works out of the box               |
 
 ---
@@ -137,7 +136,7 @@ Add to `macos/Runner/DebugProfile.entitlements` and `Release.entitlements`:
 <true/>
 ```
 
-### Web, Linux, Windows
+### Linux, Windows
 
 No additional configuration required.
 

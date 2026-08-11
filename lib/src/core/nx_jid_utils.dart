@@ -1,5 +1,7 @@
-/// NX JID formatting — mirrors nxchat's NxsmService._formatJid so signaling
-/// messages route to the same user the working nxchat app targets.
+/// NX ID formatting utilities for signaling message routing.
+library;
+
+/// Utility class for formatting NX IDs.
 class NxJidUtils {
   static const defaultDomain = 'nxservice.quantumvision-tech.com';
 

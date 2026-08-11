@@ -1,4 +1,3 @@
-/// Nexacon SDK Exception Classes
 class NexaconException implements Exception {
   final String message;
   NexaconException(this.message);
@@ -29,6 +28,5 @@ class RateLimitException extends APIException {
 }
 
 class ValidationException extends NexaconException {
-  ValidationException([String message = 'Validation failed'])
-      : super(message);
+  ValidationException([String message = 'Validation failed']) : super(message);
 }
