@@ -88,7 +88,7 @@ To verify the installation, import the package in your Dart file:
 
 .. code-block:: dart
 
-    import 'package:nexacon_sdk/nexacon_sdk.dart';
+    import 'package:nexacon_calls/nexacon_calls.dart';
 
 If there are no import errors, the SDK is installed correctly.
 

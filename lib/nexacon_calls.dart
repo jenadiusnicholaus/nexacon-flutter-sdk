@@ -1,4 +1,4 @@
-library nexacon_sdk;
+library nexacon_calls;
 
 export 'src/nexacon_sdk.dart';
 export 'src/core/exceptions.dart';

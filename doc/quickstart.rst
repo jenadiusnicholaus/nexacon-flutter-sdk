@@ -10,7 +10,7 @@ Get up and running with the Nexacon Flutter SDK in minutes.
 
 .. code-block:: dart
 
-    import 'package:nexacon_sdk/nexacon_sdk.dart';
+    import 'package:nexacon_calls/nexacon_calls.dart';
 
     final client = NexaconClient(
       apiKey: 'your_api_key',

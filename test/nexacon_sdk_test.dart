@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nexacon_sdk/nexacon_sdk.dart';
+import 'package:nexacon_calls/nexacon_calls.dart';
 
 void main() {
   group('NexaconClient', () {

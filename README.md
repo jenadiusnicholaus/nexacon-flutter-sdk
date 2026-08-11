@@ -1,8 +1,8 @@
 # Nexacon Flutter SDK
 
-[![pub.dev](https://img.shields.io/pub/v/nexacon_sdk.svg)](https://pub.dev/packages/nexacon_sdk)
+[![pub.dev](https://img.shields.io/pub/v/nexacon_calls.svg)](https://pub.dev/packages/nexacon_calls)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Platform](https://img.shields.io/badge/platform-android%20%7C%20ios%20%7C%20web%20%7C%20linux%20%7C%20macos%20%7C%20windows-blue)](https://pub.dev/packages/nexacon_sdk)
+[![Platform](https://img.shields.io/badge/platform-android%20%7C%20ios%20%7C%20web%20%7C%20linux%20%7C%20macos%20%7C%20windows-blue)](https://pub.dev/packages/nexacon_calls)
 
 A comprehensive Flutter SDK for Nexacon API — providing plug-and-play P2P audio/video calling with WebRTC and NX signaling, plus real-time messaging with presence and read receipts.
 
@@ -50,7 +50,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  nexacon_sdk: ^1.3.9
+  nexacon_calls: ^1.3.9
 ```
 
 Install:
@@ -147,7 +147,7 @@ No additional configuration required.
 Use `NexaconSDK` for the simplest possible integration:
 
 ```dart
-import 'package:nexacon_sdk/nexacon_sdk.dart';
+import 'package:nexacon_calls/nexacon_calls.dart';
 
 final sdk = NexaconSDK(
   apiKey: 'your_api_key',
@@ -189,7 +189,7 @@ Incoming calls can be handled via two paths:
 Use `acceptWhenReady()` when the app is already open — it waits for the NX `callInvitation` signal:
 
 ```dart
-import 'package:nexacon_sdk/nexacon_sdk.dart';
+import 'package:nexacon_calls/nexacon_calls.dart';
 
 final sdk = NexaconSDK(
   apiKey: 'your_api_key',
@@ -239,7 +239,7 @@ For full low-level control, use `NexaconClient` directly.
 ### Step 1: Initialize Client
 
 ```dart
-import 'package:nexacon_sdk/nexacon_sdk.dart';
+import 'package:nexacon_calls/nexacon_calls.dart';
 
 final client = NexaconClient(
   apiKey: 'your_api_key',

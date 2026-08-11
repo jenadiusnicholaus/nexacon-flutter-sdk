@@ -1,4 +1,4 @@
-import '../lib/nexacon_sdk.dart';
+import '../lib/nexacon_calls.dart';
 
 /// Basic usage example for Nexacon Flutter SDK
 /// This demonstrates the minimal setup required to make a P2P call

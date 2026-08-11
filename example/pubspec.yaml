@@ -1,15 +1,15 @@
-name: nexacon_sdk_example
-description: Demonstrates how to use the nexacon_sdk package.
-publish_to: 'none'
+name: nexacon_calls_example
+description: Demonstrates how to use the nexacon_calls package.
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  nexacon_sdk:
+  nexacon_calls:
     path: ../
 
 dev_dependencies:

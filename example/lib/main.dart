@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nexacon_sdk/nexacon_sdk.dart';
+import 'package:nexacon_calls/nexacon_calls.dart';
 
 /// Nexacon SDK Example Application
 ///
