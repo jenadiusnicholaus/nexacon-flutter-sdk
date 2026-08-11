@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-/// Signaling message types for XMPP communication
+/// Signaling message types for NX communication
 enum SignalingMessageType {
   callInvitation,
   callResponse,

@@ -73,7 +73,7 @@ class Messaging {
   /// Get message history for the current user
   ///
   /// Enhanced API features:
-  /// - Automatically resolves user identifiers (username, phone, JID)
+  /// - Automatically resolves user identifiers (username, phone, NX ID)
   /// - Supports with/without + prefix (e.g., 255788811169 or +255788811169)
   /// - Returns ALL messages between you and peer (sent OR received)
   /// - If no peer specified, returns ALL your messages
@@ -107,7 +107,7 @@ class Messaging {
     // Enhanced peer resolution: API now handles all variants
     // - Bare username (e.g., +255788811189)
     // - With/without + prefix (e.g., 255788811189 and +255788811189)
-    // - Full JID (e.g., +255788811189@nxservice.quantumvision-tech.com)
+    // - Full NX ID (e.g., +255788811189@nxservice.quantumvision-tech.com)
     // - Username or phone lookup in database
     if (peer != null && peer.isNotEmpty) {
       params['peer'] = peer;

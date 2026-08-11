@@ -2,12 +2,12 @@
 library;
 
 /// Utility class for formatting NX IDs.
-class NxJidUtils {
+class NxIdUtils {
   static const defaultDomain = 'nxservice.quantumvision-tech.com';
 
-  /// Format a phone number or partial JID into a bare NX JID (no resource).
-  static String format(String jid, {String domain = defaultDomain}) {
-    var clean = jid.trim();
+  /// Format a phone number or partial NX ID into a bare NX ID (no resource).
+  static String format(String nxid, {String domain = defaultDomain}) {
+    var clean = nxid.trim();
     if (clean.isEmpty) return clean;
 
     if (!clean.contains('@')) {
@@ -34,12 +34,12 @@ class NxJidUtils {
   }
 
   /// Strip resource suffix and normalize (e.g. user@domain/nexacon_123 → user@domain).
-  static String bare(String jid, {String domain = defaultDomain}) {
-    return format(jid, domain: domain);
+  static String bare(String nxid, {String domain = defaultDomain}) {
+    return format(nxid, domain: domain);
   }
 
-  /// Resolve a phone or JID to a full NX JID using the authenticated user's
-  /// JID as a hint for the domain.
+  /// Resolve a phone or NX ID to a full NX ID using the authenticated user's
+  /// NX ID as a hint for the domain.
   static String resolve(String to, {String? myNxId}) {
     if (to.contains('@')) return bare(to);
 

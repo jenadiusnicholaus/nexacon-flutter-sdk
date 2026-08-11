@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'core/client.dart';
 import 'calls/call_manager.dart';
-import 'core/xmpp_manager.dart';
+import 'core/nx_connection_manager.dart';
 
 /// Simplified high-level API for Nexacon SDK
 /// Handles all complexity internally - just 3 steps to make a call
@@ -12,14 +12,11 @@ class NexaconSDK {
 
   NexaconClient? _client;
   CallManager? _callManager;
-  XmppManager? _xmppManager;
+  NxConnectionManager? _nxConnection;
 
   /// Get the underlying NexaconClient for advanced use cases
-  /// (e.g., messaging, presence, rooms)
+  /// (e.g., devices, presence)
   NexaconClient? get client => _client;
-
-  /// Get the NX manager for direct messaging access
-  XmppManager? get xmppManager => _xmppManager;
 
   // Callbacks
   Function(CallState)? onCallStateChanged;
@@ -71,7 +68,7 @@ class NexaconSDK {
         print('🔐 Fetching NX token from API...');
         final nxResponse = await _client!.auth.getNxToken(username: username);
         nxtoken = nxResponse['token'];
-        nxid = nxResponse['jid'];
+        nxid = nxResponse['nxid'];
         wsUrl = nxResponse['nxws'];
         print('✅ NX token fetched successfully');
       } else {
@@ -89,15 +86,15 @@ class NexaconSDK {
 
       // Ensure nxtoken and nxid are not null
       if (nxtoken == null || nxid == null) {
-        throw Exception('NX token or JID is null');
+        throw Exception('NX token or NX ID is null');
       }
 
       _client!.setToken(nxtoken);
 
       // Establish NX connection for messaging
-      _xmppManager = _client!.nxManager;
-      final nxConnected = await _xmppManager!.connect(
-        jid: nxid,
+      _nxConnection = _client!.nxConnection;
+      final nxConnected = await _nxConnection!.connect(
+        nxid: nxid,
         password: nxtoken,
         wsUrl: wsUrl,
       );
@@ -143,8 +140,7 @@ class NexaconSDK {
       // Return the credentials used
       return {
         'token': nxtoken,
-        'jid': nxid,
-        'nxws': wsUrl,
+        'nxid': nxid,
       };
     } catch (e) {
       onError?.call('Failed to initialize: $e');
@@ -168,7 +164,7 @@ class NexaconSDK {
     String? roomId,
   }) async {
     try {
-      // Reuse pre-warmed connection if available to avoid duplicate XMPP sessions
+      // Reuse pre-warmed connection if available to avoid duplicate NX sessions
       if (_callManager == null) {
         await initialize(username: username, name: name);
       }
@@ -257,7 +253,7 @@ class NexaconSDK {
     });
 
     try {
-      // Reuse pre-warmed connection if available to avoid duplicate XMPP sessions
+      // Reuse pre-warmed connection if available to avoid duplicate NX sessions
       if (_callManager == null) {
         await initialize(username: username, name: name);
       }

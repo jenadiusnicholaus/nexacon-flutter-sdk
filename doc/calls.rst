@@ -23,7 +23,7 @@ For full peer-to-peer calling (audio/video), use the built-in ``CallManager``. I
       username: '+255788811191',
     );
     final nxtoken = nxResponse['token'];
-    final nxid = nxResponse['jid'];
+    final nxid = nxResponse['nxid'];
 
 **Step 2: Create CallManager**
 

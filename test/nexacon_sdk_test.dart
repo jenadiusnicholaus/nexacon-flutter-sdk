@@ -87,7 +87,7 @@ void main() {
       );
     });
 
-    test('refreshXMPPToken throws ValidationException for empty refreshToken',
+    test('refreshNxToken throws ValidationException for empty refreshToken',
         () async {
       expect(
         () => client.auth..refreshNxToken(refreshToken: ''),

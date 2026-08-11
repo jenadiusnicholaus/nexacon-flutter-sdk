@@ -6,7 +6,7 @@ import 'package:nexacon_calls/nexacon_calls.dart';
 /// Best Practices:
 /// 1. Always format phone numbers with country code (e.g., +255 for Tanzania)
 /// 2. Use NexaconSDK (high-level) for the simplest integration — it handles
-///    token management, XMPP connection, and CallManager lifecycle internally.
+///    token management, NX connection, and CallManager lifecycle internally.
 /// 3. After each call, NexaconSDK.endCall() automatically nulls the internal
 ///    CallManager — the next call always gets a fresh instance (safe for
 ///    consecutive back-to-back calls).
@@ -125,7 +125,7 @@ class _CallExamplePageState extends State<CallExamplePage> {
 
     _sdk!.onOtherUserLeft = () {
       // IMPORTANT: Only end the call if the peer actually connected via WebRTC.
-      // Without this guard, stale XMPP signals from a previous call session
+      // Without this guard, stale NX signals from a previous call session
       // can trigger onOtherUserLeft on a brand-new call before the peer joins,
       // causing it to auto-end immediately after acceptance.
       if (!_isOtherUserConnected) {
@@ -160,7 +160,7 @@ class _CallExamplePageState extends State<CallExamplePage> {
   }
 
   /// Initiate an outgoing call.
-  /// NexaconSDK handles token auth, XMPP connection, and WebRTC internally.
+  /// NexaconSDK handles token auth, NX connection, and WebRTC internally.
   Future<void> _initiateCall() async {
     if (_sdk == null) _createSdk();
     _resetCallState();

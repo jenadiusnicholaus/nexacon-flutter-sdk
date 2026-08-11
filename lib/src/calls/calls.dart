@@ -105,7 +105,7 @@ class Calls {
     return response;
   }
 
-  /// Initiate a P2P WebRTC call (sends FCM push + XMPP notification)
+  /// Initiate a P2P WebRTC call (sends FCM push + NX notification)
   Future<Map<String, dynamic>> initiateP2PCall({
     required String to,
     String? room,

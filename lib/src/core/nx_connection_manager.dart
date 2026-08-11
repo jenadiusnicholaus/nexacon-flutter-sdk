@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import '../xmpp/xmpp_client.dart';
-import 'nx_jid_utils.dart';
+import 'nx_id_utils.dart';
 
-/// Global connection manager (internal)
+/// Global NX connection manager (internal)
 /// Maintains a single NX connection for both chat and call signaling
-class XmppManager {
-  XmppClient? _xmppClient;
-  String? _jid;
+class NxConnectionManager {
+  XmppClient? _client;
+  String? _nxid;
   bool _isConnected = false;
 
   // Streams
@@ -48,15 +48,15 @@ class XmppManager {
   bool get isConnected => _isConnected;
 
   /// Current NX ID
-  String? get jid => _jid;
+  String? get nxid => _nxid;
 
   /// Initialize and connect to NX server
   Future<bool> connect({
-    required String jid,
+    required String nxid,
     required String password,
     required String wsUrl,
   }) async {
-    if (_isConnected && _jid == jid) {
+    if (_isConnected && _nxid == nxid) {
       return true; // Already connected with same credentials
     }
 
@@ -65,11 +65,11 @@ class XmppManager {
       await disconnect();
     }
 
-    _jid = jid;
+    _nxid = nxid;
 
-    _xmppClient = XmppClient();
-    final connected = await _xmppClient!.connect(
-      jid: jid,
+    _client = XmppClient();
+    final connected = await _client!.connect(
+      jid: nxid,
       password: password,
       wsUrl: wsUrl,
     );
@@ -81,23 +81,23 @@ class XmppManager {
       _connectionStateController.add(true);
 
       // Listen for incoming messages
-      _xmppClient!.messageStream.listen((message) {
+      _client!.messageStream.listen((message) {
         if (message.body != null) {
           try {
             final data = jsonDecode(message.body!);
             print(
-                '📥 XmppManager received message: type=${data['type']}, from=${message.from}');
+                '📥 NxConnection received message: type=${data['type']}, from=${message.from}');
 
             // Route to appropriate stream based on message type
             if (data['type'] != null && _isSignalingMessage(data['type'])) {
-              // Inject normalized sender JID so CallManager routes responses correctly
+              // Inject normalized sender NX ID so CallManager routes responses correctly
               if (message.from != null) {
-                data['fromJid'] = NxJidUtils.bare(message.from!);
+                data['fromNxId'] = NxIdUtils.bare(message.from!);
               }
-              print('📥 XmppManager routing to signaling stream');
+              print('📥 NxConnection routing to signaling stream');
               _signalingController.add(data);
             } else {
-              print('📥 XmppManager routing to message stream');
+              print('📥 NxConnection routing to message stream');
               _messageController.add(data);
             }
           } catch (e) {
@@ -115,17 +115,17 @@ class XmppManager {
                     final roomId = uri.queryParameters['room'];
                     final callerNum = uri.queryParameters['caller'];
                     if (roomId != null && callerNum != null) {
-                      final domain = _jid?.split('@').length == 2
-                          ? _jid!.split('@')[1]
+                      final domain = _nxid?.split('@').length == 2
+                          ? _nxid!.split('@')[1]
                           : 'nxservice.quantumvision-tech.com';
-                      final callerJid = callerNum.contains('@')
+                      final callerNxId = callerNum.contains('@')
                           ? callerNum
                           : '$callerNum@$domain';
                       _signalingController.add({
                         'type': 'call_invitation',
                         'roomId': roomId,
                         'callType': uri.queryParameters['type'] ?? 'audio',
-                        'fromJid': message.from ?? callerJid,
+                        'fromNxId': message.from ?? callerNxId,
                         'fromName': callerNum,
                         'timestamp': DateTime.now().millisecondsSinceEpoch,
                       });
@@ -147,7 +147,7 @@ class XmppManager {
       });
 
       // Listen for presence changes
-      _xmppClient!.presenceStream.listen((presence) {
+      _client!.presenceStream.listen((presence) {
         _presenceController.add({
           'from': presence.from,
           'type': presence.type,
@@ -181,20 +181,20 @@ class XmppManager {
 
   /// Send a message to a specific NX ID
   void sendMessage(String to, String message) {
-    if (!_isConnected || _xmppClient == null) {
+    if (!_isConnected || _client == null) {
       throw Exception('NX not connected');
     }
-    final formattedTo = NxJidUtils.bare(to);
-    print('📤 XmppManager: sending to $formattedTo (from: $to)');
-    _xmppClient!.sendMessage(formattedTo, message);
+    final formattedTo = NxIdUtils.bare(to);
+    print('📤 NxConnection: sending to $formattedTo (from: $to)');
+    _client!.sendMessage(formattedTo, message);
   }
 
   /// Disconnect from NX server
   Future<void> disconnect() async {
-    if (_xmppClient != null) {
-      _xmppClient!.disconnect();
-      _xmppClient!.dispose();
-      _xmppClient = null;
+    if (_client != null) {
+      _client!.disconnect();
+      _client!.dispose();
+      _client = null;
     }
     _isConnected = false;
     _connectionStateController.add(false);
@@ -216,8 +216,8 @@ class XmppManager {
   void _startHeartbeat() {
     _heartbeatTimer?.cancel();
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      if (_isConnected && _xmppClient != null) {
-        _xmppClient!.sendPresence();
+      if (_isConnected && _client != null) {
+        _client!.sendPresence();
       }
     });
   }
@@ -234,7 +234,7 @@ class XmppManager {
     final delaySec = 5 * (1 << (_reconnectAttempts - 1)); // Exponential backoff
     print('Reconnecting in ${delaySec}s (attempt $_reconnectAttempts)');
     _reconnectTimer = Timer(Duration(seconds: delaySec), () async {
-      if (!_isConnected && _jid != null) {
+      if (!_isConnected && _nxid != null) {
         // Note: Would need stored password/wsUrl for full reconnect
         // For now, just reset attempts
         _reconnectAttempts = 0;

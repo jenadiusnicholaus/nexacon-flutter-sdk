@@ -7,11 +7,11 @@ class Auth {
 
   Auth(this._client);
 
-  /// Get NX token for authentication (used for messaging and call signaling)
+  /// Get NX token for authentication (used for call signaling)
   ///
   /// Returns a Map containing:
   /// - token: The NX authentication token
-  /// - jid: The user's NX network ID
+  /// - nxid: The user's NX network ID
   ///
   /// Throws [ValidationException] if username is empty
   /// Throws [APIException] if the request fails
@@ -47,13 +47,16 @@ class Auth {
 
       if (!response.containsKey('jid')) {
         print('❌ Auth Error: Response missing required field: jid');
-        throw APIException('Response missing required field: jid');
+        throw APIException('Response missing required field: nxid');
       }
 
       if (!response.containsKey('nxws')) {
         print('❌ Auth Error: Response missing required field: nxws');
         throw APIException('Response missing required field: nxws');
       }
+
+      // Map server's 'jid' to 'nxid' for public API
+      response['nxid'] = response['jid'];
 
       print('✅ NX token retrieved successfully for user: $username');
       return response;

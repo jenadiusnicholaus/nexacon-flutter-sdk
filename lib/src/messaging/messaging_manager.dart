@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import '../core/xmpp_manager.dart';
+import '../core/nx_connection_manager.dart';
 
 /// Real-time messaging manager
 /// Uses global connection for instant messaging
 class MessagingManager {
-  final XmppManager _nxManager;
+  final NxConnectionManager _nxManager;
 
   // Stream for incoming chat messages
   final _messageController = StreamController<Map<String, dynamic>>.broadcast();

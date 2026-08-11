@@ -51,7 +51,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  nexacon_calls: ^1.3.14
+  nexacon_calls: ^1.3.15
 ```
 
 Install:
@@ -464,7 +464,7 @@ final client = NexaconClient(
 final nxResponse = await client.auth.getNxToken(username: '+255788811191');
 
 final nxtoken = nxResponse['token'];
-final nxid    = nxResponse['jid'];
+final nxid    = nxResponse['nxid'];
 
 // IMPORTANT: Required to avoid 403 errors on subsequent API calls
 client.setToken(nxtoken);

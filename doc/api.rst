@@ -186,7 +186,7 @@ Parameters
 Returns
 ^^^^^^^
 
-``Future<Map<String, dynamic>>``: Response containing token, jid, and wsUrl
+``Future<Map<String, dynamic>>``: Response containing token and nxid
 
 refreshNxToken
 ^^^^^^^^^^^^^
