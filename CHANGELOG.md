@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.12] - 2026-08-12
+
+### Added
+
+- Push Notification Routing section with outgoing and incoming call examples
+- Examples for both Nexacon's built-in push service and custom FCM setup
+- Device registration example for Nexacon push service
+
+### Changed
+
+- Removed all messaging references from README features and description
+- Added production patterns from real apps to README and example:
+  - Pre-warming with `initialize()` before calling
+  - `onOtherUserJoined`/`onOtherUserLeft` callbacks in quick start examples
+  - Permission requests before calling
+  - Phone number formatting helper
+  - `notifyRemoteAccepted()` for FCM fallback
+  - FCM push notification acceptance with pre-warm
+- Added dedicated Pre-warming section to README
+- Updated example/basic_usage.dart with production patterns and helper functions
+
 ## [1.3.11] - 2026-08-12
 
 ### Fixed
