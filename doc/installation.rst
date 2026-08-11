@@ -21,7 +21,7 @@ Add the Nexacon Flutter SDK to your ``pubspec.yaml`` file:
     dependencies:
       flutter:
         sdk: flutter
-      nexacon_sdk: ^1.0.0
+      nexacon_calls: ^1.3.15
 
 Install the package:
 
