@@ -319,31 +319,9 @@ client.close();
 
 ## Real-Time Messaging
 
-```dart
-final messagingManager = client.createMessagingManager();
+Real-time chat messaging (text messages, typing indicators, read receipts, presence, message history) is available as a **separate SDK** — the `Nexacon Messaging SDK`.
 
-// Receive messages
-messagingManager.messageStream.listen((message) {
-  print('💬 ${message['from']}: ${message['message']}');
-});
-
-// Send a message
-messagingManager.sendMessage(to: 'recipient@example.com', message: 'Hello!');
-
-// Typing indicator
-messagingManager.sendTypingIndicator('recipient@example.com', isTyping: true);
-
-// Read receipt
-messagingManager.sendReadReceipt('recipient@example.com', 'msg_123');
-
-// Presence (online/offline)
-messagingManager.presenceStream.listen((presence) {
-  final isOnline = presence['type'] == null || presence['type'] == 'available';
-  print('User is ${isOnline ? 'online' : 'offline'}');
-});
-
-messagingManager.dispose();
-```
+👉 [Nexacon Messaging SDK Documentation](https://nexacon-messaging.readthedocs.io/)
 
 ---
 
@@ -430,13 +408,12 @@ NexaconSDK({required String apiKey, required String secretKey, String? baseUrl})
 NexaconClient({required String apiKey, required String secretKey, String? baseUrl})
 ```
 
-| Method                                 | Description                        |
-| -------------------------------------- | ---------------------------------- |
-| `auth.getNxToken({required username})` | Generate NX token                  |
-| `setToken(String token)`               | Set NX token for API auth          |
-| `createCallManager({...})`             | Create a CallManager instance      |
-| `createMessagingManager()`             | Create a MessagingManager instance |
-| `close()`                              | Close the client                   |
+| Method                                 | Description                   |
+| -------------------------------------- | ----------------------------- |
+| `auth.getNxToken({required username})` | Generate NX token             |
+| `setToken(String token)`               | Set NX token for API auth     |
+| `createCallManager({...})`             | Create a CallManager instance |
+| `close()`                              | Close the client              |
 
 ---
 
@@ -452,21 +429,7 @@ NexaconClient({required String apiKey, required String secretKey, String? baseUr
 
 ---
 
-### MessagingManager
-
-| Stream              | Description       |
-| ------------------- | ----------------- |
-| `messageStream`     | Incoming messages |
-| `typingStream`      | Typing indicators |
-| `readReceiptStream` | Read receipts     |
-| `presenceStream`    | Presence changes  |
-
-| Method                                         | Description        |
-| ---------------------------------------------- | ------------------ |
-| `sendMessage({required to, required message})` | Send a message     |
-| `sendTypingIndicator(to, {isTyping})`          | Send typing status |
-| `sendReadReceipt(to, messageId)`               | Send read receipt  |
-| `dispose()`                                    | Cleanup            |
+> **ℹ️ Real-Time Messaging**: For chat messaging (text messages, typing indicators, read receipts, presence, message history), use the separate [Nexacon Messaging SDK](https://nexacon-messaging.readthedocs.io/).
 
 ---
 
