@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.11] - 2026-08-12
+
+### Fixed
+
+- Updated package description to reflect calls-only scope (removed messaging reference)
+- Fixed static analysis warnings in example app
+- Added CHANGELOG entry for 1.3.10
+
+## [1.3.10] - 2026-08-12
+
+### Changed
+
+- Renamed package from `nexacon_sdk` to `nexacon_calls`
+- Removed messaging from README and documentation — messaging is now in the separate Nexacon Messaging SDK
+- Updated description to reflect calls-only scope
+- Updated all imports to use `package:nexacon_calls/nexacon_calls.dart`
+
 ## [1.3.9] - 2026-08-04
 
 ### Changed

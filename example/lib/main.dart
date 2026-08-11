@@ -181,6 +181,7 @@ class _CallExamplePageState extends State<CallExamplePage> {
   }
 
   /// Accept an incoming call that arrived via FCM push notification.
+  // ignore: unused_element
   Future<void> _acceptCallFromNotification({
     required String roomId,
     required String callerNxId,
