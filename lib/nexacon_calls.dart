@@ -2,6 +2,7 @@ library nexacon_calls;
 
 export 'src/nexacon_sdk.dart';
 export 'src/core/exceptions.dart';
+export 'src/core/nexacon_config.dart';
 export 'src/core/client.dart';
 export 'src/core/nx_connection_manager.dart';
 export 'src/core/nx_id_utils.dart';

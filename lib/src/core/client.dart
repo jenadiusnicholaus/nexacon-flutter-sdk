@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../core/nexacon_config.dart';
 import '../core/exceptions.dart';
 import '../core/nx_connection_manager.dart';
 import '../auth/auth.dart';
@@ -33,8 +34,8 @@ class NexaconClient {
   NexaconClient({
     required this.apiKey,
     required this.secretKey,
-    this.baseUrl = 'https://nxservice.quantumvision-tech.com/api/v1.0',
-    this.timeout = const Duration(seconds: 30),
+    this.baseUrl = NexaconConfig.baseUrl,
+    this.timeout = NexaconConfig.defaultTimeout,
   }) {
     _httpClient = http.Client();
     nxConnection = NxConnectionManager();

@@ -1,4 +1,5 @@
 import '../core/client.dart';
+import '../core/nexacon_config.dart';
 import '../core/exceptions.dart';
 
 /// Rooms Service - Group chat room management
@@ -9,7 +10,7 @@ class Rooms {
 
   /// List all rooms for the current user
   Future<Map<String, dynamic>> list() async {
-    return _client.request('GET', '/nx/rooms/');
+    return _client.request('GET', NexaconConfig.roomsEndpoint);
   }
 
   /// Create a new group chat room
@@ -29,7 +30,7 @@ class Rooms {
     if (description.isNotEmpty) data['description'] = description;
     if (avatarUrl.isNotEmpty) data['avatar_url'] = avatarUrl;
 
-    return _client.request('POST', '/nx/rooms/', data: data);
+    return _client.request('POST', NexaconConfig.roomsEndpoint, data: data);
   }
 
   /// Get room details and members
@@ -38,7 +39,7 @@ class Rooms {
       throw ValidationException('Room name is required');
     }
 
-    return _client.request('GET', '/nx/rooms/$name/');
+    return _client.request('GET', '${NexaconConfig.roomsEndpoint}$name/');
   }
 
   /// Destroy a room
@@ -47,7 +48,7 @@ class Rooms {
       throw ValidationException('Room name is required');
     }
 
-    return _client.request('DELETE', '/nx/rooms/$name/');
+    return _client.request('DELETE', '${NexaconConfig.roomsEndpoint}$name/');
   }
 
   /// Add a member to a room with specified affiliation
@@ -68,7 +69,9 @@ class Rooms {
       'affiliation': affiliation,
     };
 
-    return _client.request('POST', '/nx/rooms/$name/members/', data: data);
+    return _client.request(
+        'POST', '${NexaconConfig.roomsEndpoint}$name/members/',
+        data: data);
   }
 
   /// Remove a member from a room
@@ -83,6 +86,7 @@ class Rooms {
       throw ValidationException('nxid is required');
     }
 
-    return _client.request('DELETE', '/nx/rooms/$name/members/$nxid/');
+    return _client.request(
+        'DELETE', '${NexaconConfig.roomsEndpoint}$name/members/$nxid/');
   }
 }

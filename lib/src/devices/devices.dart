@@ -1,4 +1,5 @@
 import '../core/client.dart';
+import '../core/nexacon_config.dart';
 import '../core/exceptions.dart';
 
 /// Platform enum
@@ -29,7 +30,8 @@ class Devices {
       data['device_name'] = deviceName;
     }
 
-    return _client.request('POST', '/nx/register-device/', data: data);
+    return _client.request('POST', NexaconConfig.registerDeviceEndpoint,
+        data: data);
   }
 
   /// Unregister a device from push notifications
@@ -38,13 +40,14 @@ class Devices {
       throw ValidationException('FCM token is required');
     }
 
-    return _client.request('DELETE', '/nx/register-device/',
+    return _client.request('DELETE', NexaconConfig.registerDeviceEndpoint,
         data: {'fcm_token': fcmToken});
   }
 
   /// List all registered devices for the current user
   Future<List<Map<String, dynamic>>> listDevices() async {
-    final response = await _client.request('GET', '/nx/devices/');
+    final response =
+        await _client.request('GET', NexaconConfig.devicesEndpoint);
     return (response['devices'] as List?)?.cast<Map<String, dynamic>>() ?? [];
   }
 
@@ -54,6 +57,7 @@ class Devices {
       throw ValidationException('Device ID is required');
     }
 
-    return _client.request('DELETE', '/nx/devices/$deviceId/');
+    return _client.request(
+        'DELETE', '${NexaconConfig.devicesEndpoint}$deviceId/');
   }
 }

@@ -1,9 +1,11 @@
 /// NX ID formatting utilities for signaling message routing.
 library;
 
+import 'nexacon_config.dart';
+
 /// Utility class for formatting NX IDs.
 class NxIdUtils {
-  static const defaultDomain = 'nxservice.quantumvision-tech.com';
+  static const defaultDomain = NexaconConfig.nxDomain;
 
   /// Format a phone number or partial NX ID into a bare NX ID (no resource).
   static String format(String nxid, {String domain = defaultDomain}) {

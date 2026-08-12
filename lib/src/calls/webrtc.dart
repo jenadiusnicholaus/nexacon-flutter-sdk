@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import '../core/nexacon_config.dart';
 import '../core/exceptions.dart';
 
 /// WebRTC Service - Manages peer connections and media streams
@@ -37,11 +38,8 @@ class WebRTCService {
       : Duration.zero;
 
   // STUN fallbacks (always present for NAT traversal)
-  static final List<Map<String, dynamic>> _stunFallbacks = [
-    {'urls': 'stun:stun.l.google.com:19302'},
-    {'urls': 'stun:stun1.l.google.com:19302'},
-    {'urls': 'stun:nxservice.quantumvision-tech.com:3478'},
-  ];
+  static final List<Map<String, dynamic>> _stunFallbacks =
+      NexaconConfig.stunServers;
 
   final Function(MediaStream)? onLocalStream;
   final Function(MediaStream)? onRemoteStream;

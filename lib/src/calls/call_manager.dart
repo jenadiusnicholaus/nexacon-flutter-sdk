@@ -5,6 +5,7 @@ import '../core/nx_connection_manager.dart';
 import 'calls.dart';
 import 'webrtc.dart';
 import 'signaling.dart';
+import '../core/nexacon_config.dart';
 import '../core/exceptions.dart';
 import '../core/nx_id_utils.dart';
 
@@ -166,7 +167,7 @@ class CallManager {
 
   /// Start collecting call statistics
   void startCallStatsCollection({
-    Duration interval = const Duration(seconds: 2),
+    Duration interval = NexaconConfig.statsInterval,
   }) {
     _webrtcService?.startStatsCollection(interval: interval);
   }
@@ -557,7 +558,7 @@ class CallManager {
   /// Wait for call response (with timeout)
   Future<void> _waitForCallResponse() async {
     _callResponseCompleter = Completer<void>();
-    final timeout = Timer(const Duration(seconds: 60), () {
+    final timeout = Timer(NexaconConfig.callResponseTimeout, () {
       if (_callResponseCompleter != null &&
           !_callResponseCompleter!.isCompleted) {
         _callResponseCompleter!.completeError('Call response timeout');

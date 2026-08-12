@@ -1,4 +1,5 @@
 import '../core/client.dart';
+import '../core/nexacon_config.dart';
 import '../core/exceptions.dart';
 
 /// Authentication Service - NX Token Management
@@ -17,7 +18,7 @@ class Auth {
   /// Throws [APIException] if the request fails
   Future<Map<String, dynamic>> getNxToken({
     required String username,
-    String host = 'nxservice.quantumvision-tech.com',
+    String host = NexaconConfig.nxDomain,
   }) async {
     // Validate input
     if (username.isEmpty) {
@@ -34,7 +35,7 @@ class Auth {
       print('🔐 Requesting NX token for user: $username');
 
       final response =
-          await _client.request('POST', '/nexacon-auth/nxm-token/', data: {
+          await _client.request('POST', NexaconConfig.nxTokenEndpoint, data: {
         'username': username.trim(),
         'host': host,
       });
@@ -78,7 +79,7 @@ class Auth {
       throw ValidationException('Refresh token is required');
     }
 
-    return _client.request('POST', '/nexacon-auth/nxm-token/refresh/', data: {
+    return _client.request('POST', NexaconConfig.nxTokenRefreshEndpoint, data: {
       'refresh_token': refreshToken,
     });
   }

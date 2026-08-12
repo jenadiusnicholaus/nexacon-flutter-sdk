@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'core/nexacon_config.dart';
 import 'core/client.dart';
 import 'calls/call_manager.dart';
 import 'core/nx_connection_manager.dart';
@@ -32,11 +33,11 @@ class NexaconSDK {
   ///
   /// [apiKey] Your Nexacon API key
   /// [secretKey] Your Nexacon secret key
-  /// [baseUrl] Optional - defaults to https://nxservice.quantumvision-tech.com/api/v1.0
+  /// [baseUrl] Optional - defaults to NexaconConfig.baseUrl
   NexaconSDK({
     required String apiKey,
     required String secretKey,
-    String baseUrl = 'https://nxservice.quantumvision-tech.com/api/v1.0',
+    String baseUrl = NexaconConfig.baseUrl,
   })  : _apiKey = apiKey,
         _secretKey = secretKey,
         _baseUrl = baseUrl;
@@ -223,7 +224,7 @@ class NexaconSDK {
     String? name,
     bool audio = true,
     bool video = false,
-    Duration timeout = const Duration(seconds: 30),
+    Duration timeout = NexaconConfig.defaultTimeout,
   }) async {
     final completer = Completer<void>();
 

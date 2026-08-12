@@ -1,4 +1,5 @@
 import '../core/client.dart';
+import '../core/nexacon_config.dart';
 import '../core/exceptions.dart';
 import 'models.dart';
 
@@ -20,7 +21,7 @@ class Messaging {
 
     return _client.request(
       'POST',
-      '/nx/message/',
+      NexaconConfig.messageEndpoint,
       data: {'to': to, 'message': message, 'type': messageType},
     );
   }
@@ -36,14 +37,15 @@ class Messaging {
 
     return _client.request(
       'POST',
-      '/nx/broadcast/',
+      NexaconConfig.broadcastEndpoint,
       data: {'message': message, 'recipients': recipients},
     );
   }
 
   /// Get user's contact list
   Future<List<Map<String, dynamic>>> getContacts() async {
-    final response = await _client.request('GET', '/nx/contacts/');
+    final response =
+        await _client.request('GET', NexaconConfig.contactsEndpoint);
     return (response['contacts'] as List?)?.cast<Map<String, dynamic>>() ?? [];
   }
 
@@ -58,7 +60,7 @@ class Messaging {
       data['name'] = name;
     }
 
-    return _client.request('POST', '/nx/contacts/', data: data);
+    return _client.request('POST', NexaconConfig.contactsEndpoint, data: data);
   }
 
   /// Remove a user from contacts
@@ -67,7 +69,7 @@ class Messaging {
       throw ValidationException('nxid is required');
     }
 
-    return _client.request('DELETE', '/nx/contacts/$nxid/');
+    return _client.request('DELETE', '${NexaconConfig.contactsEndpoint}$nxid/');
   }
 
   /// Get message history for the current user
@@ -121,7 +123,7 @@ class Messaging {
     try {
       final response = await _client.request(
         'GET',
-        '/nx/history/',
+        NexaconConfig.historyEndpoint,
         params: params,
       );
 

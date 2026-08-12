@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import '../xmpp/xmpp_client.dart';
 import 'nx_id_utils.dart';
+import '../xmpp/xmpp_client.dart';
+import 'nexacon_config.dart';
 
 /// Global NX connection manager (internal)
 /// Maintains a single NX connection for both chat and call signaling
@@ -117,7 +118,7 @@ class NxConnectionManager {
                     if (roomId != null && callerNum != null) {
                       final domain = _nxid?.split('@').length == 2
                           ? _nxid!.split('@')[1]
-                          : 'nxservice.quantumvision-tech.com';
+                          : NexaconConfig.nxDomain;
                       final callerNxId = callerNum.contains('@')
                           ? callerNum
                           : '$callerNum@$domain';
@@ -215,7 +216,7 @@ class NxConnectionManager {
   /// Start heartbeat to keep connection alive
   void _startHeartbeat() {
     _heartbeatTimer?.cancel();
-    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    _heartbeatTimer = Timer.periodic(NexaconConfig.heartbeatInterval, (timer) {
       if (_isConnected && _client != null) {
         _client!.sendPresence();
       }

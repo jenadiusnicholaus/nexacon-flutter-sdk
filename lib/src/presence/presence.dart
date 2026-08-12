@@ -1,4 +1,5 @@
 import '../core/client.dart';
+import '../core/nexacon_config.dart';
 
 /// Presence Service - User presence and online status
 class Presence {
@@ -11,6 +12,7 @@ class Presence {
     final params = <String, dynamic>{};
     if (user != null) params['user'] = user;
 
-    return _client.request('GET', '/nx/presence/', params: params);
+    return _client.request('GET', NexaconConfig.presenceEndpoint,
+        params: params);
   }
 }

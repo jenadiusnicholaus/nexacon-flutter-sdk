@@ -1,4 +1,5 @@
 import '../core/client.dart';
+import '../core/nexacon_config.dart';
 import '../core/exceptions.dart';
 
 /// Call types enum
@@ -41,7 +42,7 @@ class Calls {
       data['room'] = room;
     }
 
-    return _client.request('POST', '/nx/call/', data: data);
+    return _client.request('POST', NexaconConfig.callEndpoint, data: data);
   }
 
   /// Initiate a group call
@@ -63,7 +64,7 @@ class Calls {
       data['room'] = room;
     }
 
-    return _client.request('POST', '/nx/group-call/', data: data);
+    return _client.request('POST', NexaconConfig.groupCallEndpoint, data: data);
   }
 
   /// Get a pre-signed call URL for mobile apps
@@ -85,7 +86,8 @@ class Calls {
       data['room'] = room;
     }
 
-    final response = await _client.request('POST', '/nx/call-url/', data: data);
+    final response = await _client
+        .request('POST', NexaconConfig.callUrlEndpoint, data: data);
     return response['call_url'] ?? '';
   }
 
@@ -95,13 +97,15 @@ class Calls {
       throw ValidationException('Room is required');
     }
 
-    return _client.request('POST', '/nx/call/decline/', data: {'room': room});
+    return _client.request('POST', NexaconConfig.callDeclineEndpoint,
+        data: {'room': room});
   }
 
   /// Get TURN/STUN credentials for WebRTC P2P calls
   /// Credentials are time-limited (24h TTL). Fetch fresh credentials before each call.
   Future<Map<String, dynamic>> getWebRTCCredentials() async {
-    final response = await _client.request('GET', '/nx/webrtc/credentials/');
+    final response =
+        await _client.request('GET', NexaconConfig.webrtcCredentialsEndpoint);
     return response;
   }
 
@@ -123,7 +127,8 @@ class Calls {
       data['room'] = room;
     }
 
-    return _client.request('POST', '/nx/webrtc/call/', data: data);
+    return _client.request('POST', NexaconConfig.webrtcCallEndpoint,
+        data: data);
   }
 
   /// Record a call event for analytics (ended, failed, declined, missed)
@@ -139,7 +144,8 @@ class Calls {
     }
 
     try {
-      return await _client.request('POST', '/nx/call-analytics/', data: {
+      return await _client
+          .request('POST', NexaconConfig.callAnalyticsEndpoint, data: {
         'room': room,
         'call_type': callType.name,
         'duration_seconds': durationSeconds,
@@ -201,6 +207,7 @@ class Calls {
       params['participant'] = participant;
     }
 
-    return _client.request('GET', '/nx/call-history/', params: params);
+    return _client.request('GET', NexaconConfig.callHistoryEndpoint,
+        params: params);
   }
 }

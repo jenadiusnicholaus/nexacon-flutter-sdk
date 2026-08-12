@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.16] - 2026-08-12
+
+### Added
+
+- `NexaconConfig` — central configuration class for all constants (host, domain, base URL, WebSocket URL, timeouts, STUN servers, API endpoints)
+- All hardcoded domains, URLs, timeouts, and endpoint paths now reference `NexaconConfig` constants
+
+### Changed
+
+- `NexaconClient` default `baseUrl` and `timeout` now use `NexaconConfig`
+- `NexaconSDK` default `baseUrl` and `timeout` now use `NexaconConfig`
+- `Auth.getNxToken()` default `host` now uses `NexaconConfig.nxDomain`
+- `NxIdUtils.defaultDomain` now uses `NexaconConfig.nxDomain`
+- `NxConnectionManager` heartbeat interval and fallback domain now use `NexaconConfig`
+- `WebRTCService` STUN servers now use `NexaconConfig.stunServers`
+- `CallManager` call response timeout and stats interval now use `NexaconConfig`
+- All API service files (`calls.dart`, `messaging.dart`, `presence.dart`, `rooms.dart`, `devices.dart`) now use `NexaconConfig` endpoint constants
+
 ## [1.3.15] - 2026-08-12
 
 ### Changed
