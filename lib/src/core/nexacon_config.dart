@@ -1,19 +1,18 @@
 /// Central configuration for the Nexacon Calls SDK.
 ///
-/// Edit this file to change hosts, base URLs, WebSocket paths,
-/// NX domains, STUN/TURN servers, and other environment-specific values.
+/// Edit [host] to change the server — all URLs and domains derive from it.
 abstract class NexaconConfig {
-  /// Host domain for Nexacon services.
+  /// Host domain for all Nexacon services.
   static const String host = 'nxservice.quantumvision-tech.com';
 
-  /// NX domain (used for NX IDs and signaling).
-  static const String nxDomain = 'nxservice.quantumvision-tech.com';
+  /// NX domain (used for NX IDs and signaling) — same as [host].
+  static const String nxDomain = host;
 
   /// REST API base URL.
-  static const String baseUrl = 'https://nxservice.quantumvision-tech.com/api/v1.0';
+  static const String baseUrl = 'https://$host/api/v1.0';
 
   /// NX WebSocket URL (used internally for signaling).
-  static const String wsUrl = 'wss://nxservice.quantumvision-tech.com/nx-websocket/';
+  static const String wsUrl = 'wss://$host/nx-websocket/';
 
   /// Default HTTP request timeout.
   static const Duration defaultTimeout = Duration(seconds: 30);
@@ -49,17 +48,18 @@ abstract class NexaconConfig {
   static const Duration iceGatheringTimeout = Duration(seconds: 15);
 
   /// STUN servers for NAT traversal.
-  static const List<Map<String, dynamic>> stunServers = [
+  static final List<Map<String, dynamic>> stunServers = [
     {'urls': 'stun:stun.l.google.com:19302'},
     {'urls': 'stun:stun1.l.google.com:19302'},
-    {'urls': 'stun:nxservice.quantumvision-tech.com:3478'},
+    {'urls': 'stun:$host:3478'},
   ];
 
   // -- API Endpoints --
 
   /// NX token authentication.
   static const String nxTokenEndpoint = '/nexacon-auth/nxm-token/';
-  static const String nxTokenRefreshEndpoint = '/nexacon-auth/nxm-token/refresh/';
+  static const String nxTokenRefreshEndpoint =
+      '/nexacon-auth/nxm-token/refresh/';
 
   /// Call endpoints.
   static const String callEndpoint = '/nx/call/';
