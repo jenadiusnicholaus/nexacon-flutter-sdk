@@ -772,6 +772,513 @@ The WebSocket uses the XMPP over WebSocket protocol. After connecting, authentic
 
    The Flutter SDK handles WebSocket connection, authentication, reconnection, and message routing automatically. If you need real-time signaling in a non-Flutter environment, you will need to implement the WebSocket client yourself. The SDK's internal ``xmpp_client.dart`` can serve as a reference implementation.
 
+**Authentication**
+
+After connecting, send an authentication stanza with your NX token:
+
+.. code-block:: xml
+
+    <auth xmlns="urn:ietf:params:xml:ns:xmpp-sasl" mechanism="PLAIN">
+      BASE64(nxid\x00nxid\x00nxtoken)
+    </auth>
+
+Once authenticated, you will receive presence and message events in real time.
+
+----
+
+Call Signaling Events
+~~~~~~~~~~~~~~~~~~~~~~
+
+Call signaling messages are JSON payloads sent over the WebSocket. Each message has a ``type`` field that determines its structure.
+
+**1. call_invitation** — Incoming call invitation
+
+Sent by the caller to the callee to initiate a call. Use this to show an incoming call UI in the foreground.
+
+.. code-block:: json
+
+    {
+      "type": "call_invitation",
+      "roomId": "call_abc123",
+      "callType": "video",
+      "fromNxId": "+255788811191@nxservice.quantumvision-tech.com",
+      "fromName": "Alice",
+      "timestamp": 1723624800000
+    }
+
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Field
+     - Type
+     - Description
+   * - ``type``
+     - String
+     - Always ``call_invitation``
+   * - ``roomId``
+     - String
+     - Unique room identifier for this call
+   * - ``callType``
+     - String
+     - ``audio`` or ``video``
+   * - ``fromNxId``
+     - String
+     - Caller's NX ID (e.g. ``+255788811191@nxservice.quantumvision-tech.com``)
+   * - ``fromName``
+     - String
+     - Caller's display name
+   * - ``timestamp``
+     - int
+     - Unix timestamp in milliseconds
+
+**2. call_response** — Response to call invitation
+
+Sent by the callee to accept or reject the call.
+
+.. code-block:: json
+
+    {
+      "type": "call_response",
+      "roomId": "call_abc123",
+      "accepted": true,
+      "timestamp": 1723624801000
+    }
+
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Field
+     - Type
+     - Description
+   * - ``type``
+     - String
+     - Always ``call_response``
+   * - ``roomId``
+     - String
+     - Room identifier of the call
+   * - ``accepted``
+     - bool
+     - ``true`` to accept, ``false`` to reject
+   * - ``timestamp``
+     - int
+     - Unix timestamp in milliseconds
+
+**3. call_accepted** — Call was accepted
+
+Sent by the callee after accepting. Similar to ``call_response`` with ``accepted: true``.
+
+.. code-block:: json
+
+    {
+      "type": "call_accepted",
+      "roomId": "call_abc123",
+      "timestamp": 1723624802000
+    }
+
+**4. call_end** — End the call
+
+Sent by either party to end the call.
+
+.. code-block:: json
+
+    {
+      "type": "call_end",
+      "roomId": "call_abc123",
+      "timestamp": 1723624900000
+    }
+
+**5. webrtc_offer** — WebRTC SDP offer
+
+Sent by the caller to initiate the WebRTC peer connection.
+
+.. code-block:: json
+
+    {
+      "type": "webrtc_offer",
+      "roomId": "call_abc123",
+      "sdp": "v=0\r\no=- 4611731400430051...",
+      "sdp_type": "offer"
+    }
+
+**6. webrtc_answer** — WebRTC SDP answer
+
+Sent by the callee in response to the offer.
+
+.. code-block:: json
+
+    {
+      "type": "webrtc_answer",
+      "roomId": "call_abc123",
+      "sdp": "v=0\r\no=- 4611731400430052...",
+      "sdp_type": "answer"
+    }
+
+**7. webrtc_ice_candidate** — ICE candidate exchange
+
+Sent by either party to exchange ICE candidates for NAT traversal.
+
+.. code-block:: json
+
+    {
+      "type": "webrtc_ice_candidate",
+      "roomId": "call_abc123",
+      "candidate": "candidate:842163049 1 udp 1677729535...",
+      "sdpMid": "0",
+      "sdpMLineIndex": 0
+    }
+
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Field
+     - Type
+     - Description
+   * - ``type``
+     - String
+     - Always ``webrtc_ice_candidate``
+   * - ``roomId``
+     - String
+     - Room identifier of the call
+   * - ``candidate``
+     - String
+     - ICE candidate string
+   * - ``sdpMid``
+     - String?
+     - SDP media ID
+   * - ``sdpMLineIndex``
+     - int?
+     - SDP media line index
+
+**Plain-text call invitation (fallback)**
+
+Some call flows send a plain-text message containing a call URL instead of a JSON signaling message. Parse the URL to extract call parameters:
+
+.. code-block:: text
+
+    Incoming p2p call. Click to join: https://nxservice.quantumvision-tech.com/nexacon-call.html?room=call_abc123&caller=+255788811191&type=audio
+
+Extract ``room``, ``caller``, and ``type`` from the query parameters.
+
+----
+
+Messaging Events
+~~~~~~~~~~~~~~~~~
+
+Real-time messaging events are JSON payloads sent over the WebSocket.
+
+**1. Chat message** — Incoming text message
+
+.. code-block:: json
+
+    {
+      "type": "chat",
+      "message": "Hello!",
+      "from": "+255788811191@nxservice.quantumvision-tech.com",
+      "to": "+255788811192@nxservice.quantumvision-tech.com",
+      "timestamp": 1723624800000
+    }
+
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Field
+     - Type
+     - Description
+   * - ``type``
+     - String
+     - ``chat`` or ``groupchat``
+   * - ``message``
+     - String
+     - Message content
+   * - ``from``
+     - String
+     - Sender's NX ID
+   * - ``to``
+     - String
+     - Recipient's NX ID
+   * - ``timestamp``
+     - int
+     - Unix timestamp in milliseconds
+
+**2. Typing indicator** — User is typing
+
+.. code-block:: json
+
+    {
+      "type": "typing",
+      "is_typing": true,
+      "from": "+255788811191@nxservice.quantumvision-tech.com",
+      "timestamp": 1723624800000
+    }
+
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Field
+     - Type
+     - Description
+   * - ``type``
+     - String
+     - Always ``typing``
+   * - ``is_typing``
+     - bool
+     - ``true`` when user is typing, ``false`` when stopped
+   * - ``from``
+     - String
+     - Sender's NX ID
+   * - ``timestamp``
+     - int
+     - Unix timestamp in milliseconds
+
+**3. Read receipt** — Message was read
+
+.. code-block:: json
+
+    {
+      "type": "read_receipt",
+      "message_id": "msg_abc123",
+      "from": "+255788811191@nxservice.quantumvision-tech.com",
+      "timestamp": 1723624800000
+    }
+
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Field
+     - Type
+     - Description
+   * - ``type``
+     - String
+     - Always ``read_receipt``
+   * - ``message_id``
+     - String
+     - ID of the message that was read
+   * - ``from``
+     - String
+     - Sender's NX ID
+   * - ``timestamp``
+     - int
+     - Unix timestamp in milliseconds
+
+**Sending messages**
+
+To send a message, send a JSON payload to the recipient's NX ID via the WebSocket:
+
+.. code-block:: json
+
+    {
+      "type": "chat",
+      "message": "Hello!",
+      "timestamp": 1723624800000
+    }
+
+To send a typing indicator:
+
+.. code-block:: json
+
+    {
+      "type": "typing",
+      "is_typing": true,
+      "timestamp": 1723624800000
+    }
+
+To send a read receipt:
+
+.. code-block:: json
+
+    {
+      "type": "read_receipt",
+      "message_id": "msg_abc123",
+      "timestamp": 1723624800000
+    }
+
+----
+
+Presence Events
+~~~~~~~~~~~~~~~
+
+Presence events indicate user online/offline status and typing state. These are delivered as presence stanzas over the WebSocket.
+
+**1. User online** — User became available
+
+.. code-block:: json
+
+    {
+      "from": "+255788811191@nxservice.quantumvision-tech.com",
+      "type": null,
+      "show": "available"
+    }
+
+**2. User offline** — User went offline
+
+.. code-block:: json
+
+    {
+      "from": "+255788811191@nxservice.quantumvision-tech.com",
+      "type": "unavailable",
+      "show": null
+    }
+
+**3. User typing (via presence)** — Composing state
+
+.. code-block:: json
+
+    {
+      "from": "+255788811191@nxservice.quantumvision-tech.com",
+      "type": "composing",
+      "show": null
+    }
+
+**4. User stopped typing (via presence)** — Paused state
+
+.. code-block:: json
+
+    {
+      "from": "+255788811191@nxservice.quantumvision-tech.com",
+      "type": "paused",
+      "show": null
+    }
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Presence Type
+     - Description
+   * - ``null`` / ``available``
+     - User is online and available
+   * - ``unavailable``
+     - User is offline
+   * - ``composing``
+     - User is typing a message
+   * - ``paused``
+     - User stopped typing
+   * - ``active``
+     - User is active (e.g. just opened the app)
+
+**Sending presence**
+
+To broadcast your own presence (online status):
+
+.. code-block:: xml
+
+    <presence>
+      <show>available</show>
+    </presence>
+
+To go offline:
+
+.. code-block:: xml
+
+    <presence type="unavailable"/>
+
+To send a typing indicator via presence:
+
+.. code-block:: xml
+
+    <presence to="+255788811192@nxservice.quantumvision-tech.com">
+      <show>composing</show>
+    </presence>
+
+----
+
+Connection Lifecycle
+~~~~~~~~~~~~~~~~~~~~~
+
+**Heartbeat / Ping**
+
+Send a ping every 30 seconds to keep the connection alive:
+
+.. code-block:: xml
+
+    <iq type="get" id="ping_1723624800000">
+      <ping xmlns="urn:xmpp:ping"/>
+    </iq>
+
+The server responds with:
+
+.. code-block:: xml
+
+    <iq type="result" id="ping_1723624800000"/>
+
+**Reconnection**
+
+If the WebSocket disconnects, reconnect with exponential backoff:
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Attempt
+     - Delay
+   * - 1
+     - 5 seconds
+   * - 2
+     - 10 seconds
+   * - 3
+     - 20 seconds
+   * - 4
+     - 40 seconds
+   * - 5+
+     - Max 30 seconds (capped)
+
+Maximum reconnection attempts: **10**
+
+**Event Summary**
+
+.. list-table::
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Event
+     - Direction
+     - Description
+   * - ``call_invitation``
+     - Incoming
+     - Incoming call — use to show call UI in foreground
+   * - ``call_response``
+     - Outgoing
+     - Accept or reject an incoming call
+   * - ``call_accepted``
+     - Incoming
+     - Remote party accepted the call
+   * - ``call_end``
+     - Bidirectional
+     - End the active call
+   * - ``webrtc_offer``
+     - Outgoing/Incoming
+     - WebRTC SDP offer for peer connection
+   * - ``webrtc_answer``
+     - Outgoing/Incoming
+     - WebRTC SDP answer for peer connection
+   * - ``webrtc_ice_candidate``
+     - Bidirectional
+     - ICE candidate for NAT traversal
+   * - ``chat`` / ``groupchat``
+     - Bidirectional
+     - Real-time text message
+   * - ``typing``
+     - Bidirectional
+     - Typing indicator (JSON message)
+   * - ``read_receipt``
+     - Bidirectional
+     - Message read confirmation
+   * - ``composing`` / ``paused``
+     - Bidirectional
+     - Typing indicator (presence stanza)
+   * - ``available`` / ``unavailable``
+     - Bidirectional
+     - Online/offline presence
+   * - Ping/Pong
+     - Bidirectional
+     - Keep-alive heartbeat (every 30s)
+
 ----
 
 SDK vs API Comparison
