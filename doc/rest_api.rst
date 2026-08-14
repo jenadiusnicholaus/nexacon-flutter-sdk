@@ -73,14 +73,14 @@ Obtain an NX token for signaling. This token is used for WebSocket authenticatio
 
     {
       "token": "nx_abc123...",
-      "jid": "+255788811191@nxservice.quantumvision-tech.com",
+      "nxid": "+255788811191@nxservice.quantumvision-tech.com",
       "nxws": "wss://nxservice.quantumvision-tech.com/nx-websocket/",
       "refresh_token": "rt_xyz789..."
     }
 
 .. note::
 
-   The ``jid`` field is the user's NX ID. The SDK maps this to ``nxid`` internally. When using the API directly, use ``jid`` as the NX identifier.
+   The ``nxid`` field is the user's NX ID. Use this value as the NX identifier for WebSocket authentication and signaling.
 
 **cURL example**
 
