@@ -44,6 +44,26 @@ For endpoints that require NX token authentication (call signaling, messaging), 
 
     https://nxservice.quantumvision-tech.com/api/v1.0
 
+Getting Your API Key and Secret Key
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To use the Nexacon REST API, you need an API Key and Secret Key. Obtain them from the Nexacon platform:
+
+1. **Sign up** — Go to `nexacon.africa <https://nexacon.africa>`_ and create an account.
+2. **Log in** — Sign in to your Nexacon dashboard.
+3. **Navigate to the Developer Portal** — From the dashboard sidebar, click **Developer** or **API Settings**.
+4. **Create a new application** — Click **Create Application**, enter a name and description, then submit.
+5. **Copy your credentials** — Once the application is created, you will see your **API Key** and **Secret Key**. Copy both values.
+
+.. code-block:: text
+
+    API Key:    nx_api_xxxxxxxxxxxxxxxxxxxxxxxx
+    Secret Key: nx_secret_xxxxxxxxxxxxxxxxxxxxxx
+
+.. warning::
+
+   Keep your Secret Key secure. Never expose it in client-side code, public repositories, or untrusted environments. Always use it from your backend server.
+
 ----
 
 NX Token
