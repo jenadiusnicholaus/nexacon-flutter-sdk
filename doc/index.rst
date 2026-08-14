@@ -34,7 +34,7 @@ The Nexacon Flutter SDK enables developers to add P2P calling capabilities to th
 * **NX Signaling**: Automatic WebSocket connection with reconnection logic
 * **WebRTC**: Peer connection management with ICE negotiation
 * **Call Management**: Complete call lifecycle handling
-* **Platform Support**: iOS, Android, Web, and Desktop
+* **Platform Support**: Android, iOS, Linux, macOS, and Windows
 * **Global NX Connection**: Shared connection for calls and real-time messaging
 * **Automatic Call Analytics**: Records call events on every call end
 

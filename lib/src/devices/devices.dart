@@ -3,7 +3,7 @@ import '../core/nexacon_config.dart';
 import '../core/exceptions.dart';
 
 /// Platform enum
-enum Platform { android, ios, web }
+enum Platform { android, ios }
 
 /// Device Management Service
 class Devices {

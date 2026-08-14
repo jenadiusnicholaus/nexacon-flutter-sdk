@@ -376,7 +376,7 @@ Nexacon provides a built-in push service that handles FCM delivery for you. Regi
 final client = sdk.client; // or NexaconClient directly
 await client.devices.register(
   fcmToken: fcmToken,       // from FirebaseMessaging.getToken()
-  platform: 'android',      // 'android', 'ios', or 'web'
+  platform: 'android',      // 'android' or 'ios'
   deviceId: deviceId,       // optional
 );
 ```

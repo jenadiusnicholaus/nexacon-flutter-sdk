@@ -362,7 +362,6 @@ void main() {
     test('Platform enum values', () {
       expect(Platform.android.toString(), 'Platform.android');
       expect(Platform.ios.toString(), 'Platform.ios');
-      expect(Platform.web.toString(), 'Platform.web');
     });
   });
 }
