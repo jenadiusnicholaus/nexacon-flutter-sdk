@@ -25,6 +25,7 @@ Welcome to the official documentation for the Nexacon Flutter SDK. This SDK prov
    :caption: API Reference:
 
    api
+   rest_api
 
 Overview
 --------
