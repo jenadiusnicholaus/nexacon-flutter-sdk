@@ -167,33 +167,6 @@ Initiate a 1:1 Call
       -H "X-NX-Token: YOUR_NX_TOKEN" \
       -d '{"to": "+255788811192", "type": "video"}'
 
-Initiate a Group Call
-~~~~~~~~~~~~~~~~~~~~~~
-
-**Request**
-
-::
-
-    POST /nx/group-call/
-
-.. code-block:: json
-
-    {
-      "participants": ["+255788811192", "+255788811193"],
-      "type": "video"
-    }
-
-**cURL example**
-
-.. code-block:: bash
-
-    curl -X POST https://nxservice.quantumvision-tech.com/api/v1.0/nx/group-call/ \
-      -H "Content-Type: application/json" \
-      -H "X-API-Key: YOUR_API_KEY" \
-      -H "X-Secret-Key: YOUR_SECRET_KEY" \
-      -H "X-NX-Token: YOUR_NX_TOKEN" \
-      -d '{"participants": ["+255788811192", "+255788811193"], "type": "video"}'
-
 Get a Pre-signed Call URL
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
