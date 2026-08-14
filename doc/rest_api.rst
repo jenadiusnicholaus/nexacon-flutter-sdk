@@ -224,10 +224,18 @@ Fetch TURN/STUN credentials for WebRTC peer connections. Credentials have a 24-h
 .. code-block:: json
 
     {
-      "iceServers": [
-        {"urls": "stun:stun.l.google.com:19302"},
-        {"urls": "turn:turn.nexacon.com:3478", "username": "...", "credential": "..."}
-      ]
+      "status": "success",
+      "ice_servers": [
+        {
+          "urls": "stun:nxservice.quantumvision-tech.com:3478"
+        },
+        {
+          "urls": "turn:nxservice.quantumvision-tech.com:3478?transport=udp",
+          "username": "<time_limited_user>",
+          "credential": "<hmac_sha1_credential>"
+        }
+      ],
+      "ttl": 86400
     }
 
 **cURL example**
